@@ -124,8 +124,7 @@
       <Command>xcopy /y /d  "$(ProjectDir)Dependencies\lib\$(Platform)\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>Dependencies.exe</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

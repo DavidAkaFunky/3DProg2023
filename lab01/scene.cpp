@@ -85,10 +85,18 @@ Vector Plane::getNormal(Vector point)
 
 bool Sphere::intercepts(Ray& r, float& t )
 {
-	//PUT HERE YOUR CODE
-	// o + td = (x - x0 ) **2 + (y - y0)**2 + (z - z0)**2
-	// Reescrever x, y e z em função de t
-  return (false);
+	// r = o + td and d is a unit vector
+	// See https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection for more
+	float nabula = pow((r.direction * (r.origin - center)), 2) - (pow((r.origin - center).length(), 2) - SqRadius);
+	printf("%f\n", nabula);
+	if (nabula < 0) return false;
+	if (nabula == 0)
+		t = -(r.direction * (r.origin - center));
+	else {
+		float t1 = -(r.direction * (r.origin - center)) - sqrt(nabula), t2 = -(r.direction * (r.origin - center)) + sqrt(nabula);
+		t = (abs(t1) <= abs(t2) ? t1 : t2);
+	}
+	return true;
 }
 
 
@@ -100,7 +108,7 @@ Vector Sphere::getNormal( Vector point )
 
 AABB Sphere::GetBoundingBox() {
 	Vector a_min;
-	Vector a_max ;
+	Vector a_max;
 
 	//PUT HERE YOUR CODE
 	return(AABB(a_min, a_max));
