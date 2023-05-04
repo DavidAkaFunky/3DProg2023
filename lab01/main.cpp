@@ -455,8 +455,13 @@ void setupGLUT(int argc, char* argv[])
 
 Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
-	//INSERT HERE YOUR CODE
-	return Color(0.0f, 0.0f, 0.0f);
+	float hit_dist = 0.0, shortest_hit_dist = -1.0;
+	for (int i = 0; i < scene->getNumObjects(); i++)
+		if (scene->getObject(i)->intercepts(ray, hit_dist))
+			shortest_hit_dist = min(shortest_hit_dist, hit_dist);
+	printf("%f\n", shortest_hit_dist);
+	if (shortest_hit_dist < 0.0)
+		return scene->GetBackgroundColor();
 }
 
 
@@ -484,14 +489,11 @@ void renderScene()
 			pixel.x = x + 0.5f;
 			pixel.y = y + 0.5f;
 
-			/*YOUR 2 FUNTIONS:
 			Ray ray = scene->GetCamera()->PrimaryRay(pixel);   //function from camera.h
-
 			color = rayTracing(ray, 1, 1.0).clamp();
+			/*YOUR 2 FUNTIONS:
 			*/
-
-			color = scene->GetBackgroundColor(); //TO CHANGE - just for the template
-
+			
 			img_Data[counter++] = u8fromfloat((float)color.r());
 			img_Data[counter++] = u8fromfloat((float)color.g());
 			img_Data[counter++] = u8fromfloat((float)color.b());

@@ -86,6 +86,8 @@ Vector Plane::getNormal(Vector point)
 bool Sphere::intercepts(Ray& r, float& t )
 {
 	//PUT HERE YOUR CODE
+	// o + td = (x - x0 ) **2 + (y - y0)**2 + (z - z0)**2
+	// Reescrever x, y e z em função de t
   return (false);
 }
 
