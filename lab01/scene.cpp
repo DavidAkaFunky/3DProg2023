@@ -87,13 +87,19 @@ bool Sphere::intercepts(Ray& r, float& t )
 {
 	// r = o + td and d is a unit vector
 	// See https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection for more
-	float nabula = pow((r.direction * (r.origin - center)), 2) - (pow((r.origin - center).length(), 2) - SqRadius);
+	float b = r.direction * (center - r.origin);
+	float c = pow((center - r.origin).length(), 2) - SqRadius;
+	float nabula = pow(b, 2) - c;
+	//printf("ORIGIN: %f %f %f\n", r.origin.x, r.origin.y, r.origin.z);
+	//printf("DIRECTION: %f %f %f\n", r.direction.x, r.direction.y, r.direction.z);
+	//printf("CENTER: %f %f %f\n", center.x, center.y, center.z);
+	//printf("RADIUS: %f\n", SqRadius);
 	printf("%f\n", nabula);
 	if (nabula < 0) return false;
 	if (nabula == 0)
-		t = -(r.direction * (r.origin - center));
+		t = b;
 	else {
-		float t1 = -(r.direction * (r.origin - center)) - sqrt(nabula), t2 = -(r.direction * (r.origin - center)) + sqrt(nabula);
+		float t1 = b + sqrt(nabula), t2 = b - sqrt(nabula);
 		t = (abs(t1) <= abs(t2) ? t1 : t2);
 	}
 	return true;
