@@ -85,24 +85,26 @@ Vector Plane::getNormal(Vector point)
 
 bool Sphere::intercepts(Ray& r, float& t )
 {
-	// r = o + td and d is a unit vector
-	// See https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection for more
-	float b = r.direction * (center - r.origin);
-	float c = pow((center - r.origin).length(), 2) - SqRadius;
-	float nabula = pow(b, 2) - c;
-	//printf("ORIGIN: %f %f %f\n", r.origin.x, r.origin.y, r.origin.z);
-	//printf("DIRECTION: %f %f %f\n", r.direction.x, r.direction.y, r.direction.z);
-	//printf("CENTER: %f %f %f\n", center.x, center.y, center.z);
-	//printf("RADIUS: %f\n", SqRadius);
-	printf("%f\n", nabula);
-	if (nabula < 0) return false;
-	if (nabula == 0)
-		t = b;
-	else {
-		float t1 = b + sqrt(nabula), t2 = b - sqrt(nabula);
-		t = (abs(t1) <= abs(t2) ? t1 : t2);
-	}
-	return true;
+    Vector oc = r.origin - center;
+    float b = r.direction * oc;
+    float c = pow(oc.length(), 2) - SqRadius;
+    float delta = pow(b, 2) - c;
+
+    if (delta < 0)
+        return false;
+
+    float sqrtDelta = sqrt(delta);
+    float t1 = -b - sqrtDelta, t2 = -b + sqrtDelta;
+
+    if (t1 > t2)
+        std::swap(t1, t2);
+
+    if (t2 < 0)
+        return false;
+
+    t = (t1 >= 0) ? t1 : t2;
+
+    return true;
 }
 
 

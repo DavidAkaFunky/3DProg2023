@@ -497,7 +497,7 @@ Color rayTracing(Ray ray, int depth, float ior_1) // index of refraction of medi
 		}
 		if (in_shadow)
 			continue;
-		colour = shortest_hit_object->GetMaterial()->GetDiffColor() + shortest_hit_object->GetMaterial()->GetSpecColor();
+		colour += shortest_hit_object->GetMaterial()->GetDiffColor() + shortest_hit_object->GetMaterial()->GetSpecColor();
 	}
 
 	if (depth >= MAX_DEPTH)
