@@ -7,6 +7,15 @@
 #include "macros.h"
 
 
+Vector crossProduct(Vector vA, Vector vB) {
+	Vector c_P;
+	c_P.x = vA.y * vB.z - vA.z * vB.y;
+	c_P.y = -(vA.x * vB.z - vA.z * vB.x);
+	c_P.z = vA.x * vB.y - vA.y * vB.x;
+	return c_P;
+}
+
+
 Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 {
 	points[0] = P0; points[1] = P1; points[2] = P2;
@@ -39,9 +48,44 @@ Vector Triangle::getNormal(Vector point)
 //
 
 bool Triangle::intercepts(Ray& r, float& t ) {
+	//reference: scratch a pixel
+	//any point works
+	Vector p0 = points[0];
+	float D = -(r.origin.x * p0.x + r.origin.y * p0.y + r.origin.z * p0.z);
+	float vd = r.direction * normal;
+	float v0 = -(normal * r.origin + D);
 
-	//PUT HERE YOUR CODE
-	return (false);
+	//ray is parallel to triangle
+	if (vd == 0)
+		return false;
+
+	float ti = v0 / vd;
+
+	if (ti < 0)
+		return false;
+
+	Vector P = r.origin + r.direction * ti;
+	Vector C; //perpendicular to triangle
+
+	// edge 0
+	Vector edge0 = points[1] - points[0];
+	Vector vp0 = P - points[0];
+	C = crossProduct(edge0, vp0);
+	if (normal * C < 0) return false;
+
+	// edge 1
+	Vector edge1 = points[2] - points[1];
+	Vector vp1 = P - points[1];
+	C = crossProduct(edge1, vp1);
+	if (normal * C < 0)  return false;
+
+	// edge 2
+	Vector edge2 = points[0] - points[2];
+	Vector vp2 = P - points[2];
+	C = crossProduct(edge2, vp2);
+	if (normal * C < 0) return false;
+
+	return true; // this ray hits the triangle
 }
 
 Plane::Plane(Vector& a_PN, float a_D)
@@ -79,7 +123,7 @@ bool Plane::intercepts( Ray& r, float& t )
 	float vd = r.direction * PN;
 	float v0 = -(PN * r.origin + D);
 
-	//ray is parallel to intersection
+	//ray is parallel to plane
 	if (vd == 0)
 		return false;
 
@@ -149,8 +193,51 @@ AABB aaBox::GetBoundingBox() {
 
 bool aaBox::intercepts(Ray& ray, float& t)
 {
-	//PUT HERE YOUR CODE
-		return (false);
+	//tirado dos slides (?)
+	double a = 1.0 / ray.direction.x;
+	double b = 1.0 / ray.direction.y;
+	double c = 1.0 / ray.direction.z;
+	float tE, tL; //entering and leaving t values 
+	Vector face_in, face_out; // normals
+	// find largest tE, entering t value
+
+	if (min.x > min.y) {
+		tE = min.x;
+		face_in = (a >= 0.0) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
+	}
+	else {
+		tE = min.y;
+		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
+	}
+	if (min.z > tE) {
+		tE = min.z;
+		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
+	// find smallest tL, leaving t value
+	if (max.z < max.y) {
+		tL = max.z;
+		face_out = (a >= 0.0) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
+	}
+	else {
+		tL = max.y;
+		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
+	}
+	if (max.z < tL) {
+		tL = max.z;
+		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
+	}
+	if (tE < tL && tL > 0) { // condition for a hit
+		if (tE > 0) {
+			t = tE; // ray hits outside surface
+			Normal = face_in;
+		}
+		else {
+			t = tL; // ray hits inside surface
+			Normal = face_out;
+		}
+		return true;
+	}
+	return false;
 }
 
 Vector aaBox::getNormal(Vector point)
