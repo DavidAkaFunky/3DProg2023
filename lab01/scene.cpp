@@ -73,8 +73,23 @@ Plane::Plane(Vector& P0, Vector& P1, Vector& P2)
 
 bool Plane::intercepts( Ray& r, float& t )
 {
-	//PUT HERE YOUR CODE
-   return (false);
+	// A plane is defined by the equation: Ax + By + Cz + D = 0, or the vector [A B C D].
+	// A, B, and C, define the normal to the plane, Pn = [A B C].
+	// the distance from the origin [0 0 0] to the plane is D.
+	float vd = r.direction * PN;
+	float v0 = -(PN * r.origin + D);
+
+	//ray is parallel to intersection
+	if (vd == 0)
+		return false;
+
+	t = v0/vd;
+
+	//intersection is behind the origin of the ray
+	if (t < 0)
+		return false;
+	
+	return true;
 }
 
 Vector Plane::getNormal(Vector point) 
