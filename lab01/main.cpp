@@ -463,14 +463,15 @@ void setupGLUT(int argc, char *argv[])
 Color rayTracing(Ray ray, int depth, float ior_1) // index of refraction of medium 1 where the ray is travelling
 {
 	float hit_dist, shortest_hit_dist = std::numeric_limits<float>::max();
-	Object *shortest_hit_object = NULL;
+	Object* shortest_hit_object = NULL;
 
-	for (int i = 0; i < scene->getNumObjects(); i++)
-		if (scene->getObject(i)->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist)
-		{
+	for (int i = 0; i < scene->getNumObjects(); i++) {
+		Object* object = scene->getObject(i);
+		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
 			shortest_hit_dist = hit_dist;
-			shortest_hit_object = scene->getObject(i);
+			shortest_hit_object = object;
 		}
+	}
 
 	if (shortest_hit_object == NULL)
 		return scene->GetBackgroundColor();

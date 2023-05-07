@@ -75,7 +75,7 @@ public:
 		float x, y, z;
 		x = w * ((pixel_sample.x + 0.5) / res_x - 0.5);
 		y = h * ((pixel_sample.y + 0.5) / res_y - 0.5);
-		z = ((eye - at).length());
+		z = -((eye - at).length());
 		Vector ray_dir = Vector(x, y, z).normalize();
 		return Ray(eye, ray_dir);  
 	}
