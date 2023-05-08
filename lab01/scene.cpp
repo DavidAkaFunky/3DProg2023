@@ -39,6 +39,9 @@ Vector Triangle::getNormal(Vector point)
 //
 
 bool Triangle::intercepts(Ray& r, float& t ) {
+
+	// TODO: INTERCEPTION WORKS BUT T IS WRONG
+
 	//reference: scratch a pixel
 	//any point works
 	Vector p0 = points[0];
@@ -111,12 +114,14 @@ bool Plane::intercepts( Ray& r, float& t )
 	// A plane is defined by the equation: Ax + By + Cz + D = 0, or the vector [A B C D].
 	// A, B, and C, define the normal to the plane, Pn = [A B C].
 	// the distance from the origin [0 0 0] to the plane is D.
-	float vd = r.direction * PN;
-	float v0 = -(PN * r.origin + D);
+	Vector shading_normal = getShadingNormal(r.direction, r.origin);
+	float vd = r.direction * shading_normal;
 
 	//ray is parallel to plane
 	if (vd == 0)
 		return false;
+
+	float v0 = -(shading_normal * r.origin + D);
 
 	t = v0/vd;
 
@@ -124,6 +129,7 @@ bool Plane::intercepts( Ray& r, float& t )
 	if (t < 0)
 		return false;
 	
+	printf("INSIDE PLANE, T IS %f\n", t);
 	return true;
 }
 
@@ -180,23 +186,30 @@ AABB aaBox::GetBoundingBox() {
 
 bool aaBox::intercepts(Ray& ray, float& t)
 {
-	
 	//tirado dos slides (?)
-	double tx_min, ty_min, tz_min;
-	double tx_max, ty_max, tz_max;
+	double tx_min = 0, ty_min = 0, tz_min = 0;
+	double tx_max = 0, ty_max = 0, tz_max = 0;
 
 	double a = 1.0 / ray.direction.x;
-	if(a >= 0) {
+	if (ray.direction.x == 0) {
+		printf("CASE 1 ");
+		tx_max = std::numeric_limits<float>::max();
+		tx_min = -tx_max;
+	}
+	else if (a >= 0) {
+		printf("CASE 2, a: %f, ray.direction.x = %f ", a, ray.direction.x);
 		tx_min = (min.x - ray.origin.x) * a;
 		tx_max = (max.x - ray.origin.x) * a;
 	}
 	else {
+		printf("CASE 3, a: %f, ray.direction.x = %f ", a, ray.direction.x);
 		tx_min = (max.x - ray.origin.x) * a;
 		tx_max = (min.x - ray.origin.x) * a;
 	}
+	printf("tx_min = %f, tx_max = %f\n", tx_min, tx_max);
 
 	double b = 1.0 / ray.direction.y;
-	if(b >= 0) {
+	if (b >= 0) {
 		ty_min = (min.y - ray.origin.y) * b;
 		ty_max = (max.y - ray.origin.y) * b;
 	}
@@ -204,16 +217,19 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		ty_min = (max.y - ray.origin.y) * b;
 		ty_max = (min.y - ray.origin.y) * b;
 	}
+	printf("ty_min = %f, ty_max = %f\n", ty_min, ty_max);
 
 	double c = 1.0 / ray.direction.z;
-	if(c >= 0) {
+	if (c >= 0) {
 		tz_min = (min.z - ray.origin.z) * c;
 		tz_max = (max.z - ray.origin.z) * c;
 	}
 	else {
-		ty_min = (max.z - ray.origin.z) * c;
-		ty_max = (min.z - ray.origin.z) * c;
+		tz_min = (max.z - ray.origin.z) * c;
+		tz_max = (min.z - ray.origin.z) * c;
 	}
+	printf("tz_min = %f, tz_max = %f\n", tz_min, tz_max);
+
 
 	float tE, tL; //entering and leaving t values 
 	Vector face_in, face_out; // normals
@@ -227,10 +243,13 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tE = ty_min;
 		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
 	}
+
 	if (tz_min > tE) {
 		tE = tz_min;
 		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
 	}
+
+
 	// find smallest tL, leaving t value
 	if (tx_max < ty_max) {
 		tL = tx_max;
@@ -240,10 +259,13 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tL = ty_max;
 		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
 	}
+
 	if (tz_max < tL) {
 		tL = tz_max;
 		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
 	}
+	printf("tE = %f, tL = %f\n", tE, tL);
+
 	if (tE < tL && tL > 0) { // condition for a hit
 		if (tE > 0) {
 			t = tE; // ray hits outside surface
@@ -253,6 +275,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 			t = tL; // ray hits inside surface
 			Normal = face_out;
 		}
+		printf("t = %f, normal is %f, %f, %f\n", t, Normal.x, Normal.y, Normal.z);
 		return true;
 	}
 	return false;
@@ -264,7 +287,8 @@ Vector aaBox::getNormal(Vector point)
 }
 
 Vector Object::getShadingNormal(Vector incident, Vector point) {
-	return incident * point > 0 ? getNormal(point) : getNormal(point) * (-1);
+	Vector normal = getNormal(point);
+	return incident * normal > 0 ? normal : normal * (-1);
 }
 
 Scene::Scene()

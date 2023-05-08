@@ -26,7 +26,7 @@
 #include "macros.h"
 
 // Enable OpenGL drawing.
-bool drawModeEnabled = true;
+bool drawModeEnabled = false;
 
 bool P3F_scene = true; // choose between P3F scene or a built-in random scene
 
@@ -460,45 +460,64 @@ void setupGLUT(int argc, char *argv[])
 
 /////////////////////////////////////////////////////YOUR CODE HERE///////////////////////////////////////////////////////////////////////////////////////
 
+Color rayTracing(Ray ray, int depth, float ior_i);
+
+Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point, Material* material, int depth, float ior_i, float x) {
+	// Reflection
+	Vector refl_ray_dir = normal_vec * cos_theta_i * 2 - rev_ray_dir;
+	Ray refl_ray(hit_point, refl_ray_dir);
+	printf("ORIGINAL RAY IS %f, %f, %f\n", rev_ray_dir.x, rev_ray_dir.y, rev_ray_dir.z);
+	printf("NORMAL IS %f, %f, %f\n", normal_vec.x, normal_vec.y, normal_vec.z);
+	printf("cos theta i is %f\n", cos_theta_i);
+	printf("SHORTEST HIT DISTANCE IS %f\n", x);
+	printf("RAY IS %f, %f, %f\n", refl_ray_dir.x, refl_ray_dir.y, refl_ray_dir.z);
+	Color refl_colour = rayTracing(refl_ray, depth + 1, ior_i);
+	return refl_colour * material->GetReflection();
+}
+
 Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medium 1 where the ray is travelling
 {
 	float hit_dist, shortest_hit_dist = std::numeric_limits<float>::max();
-	Object* shortest_hit_object = NULL;
+	Object* shortest_hit_object = nullptr;
 	int shortest_hit_index = -1;
 
 	for (int i = 0; i < scene->getNumObjects(); i++) {
 		Object* object = scene->getObject(i);
+		printf("SHOOTING ON OBJECT %d\n", i);
 		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
 			shortest_hit_dist = hit_dist;
 			shortest_hit_object = object;
 			shortest_hit_index = i;
+			printf("SHORTEST HIT DISTANCE IS %f", shortest_hit_dist);
+			cout << "TYPE IS " << typeid(*object).name();
 		}
 	}
 
-	if (shortest_hit_object == NULL)
+	if (shortest_hit_object == nullptr)
 		return scene->GetBackgroundColor();
 
 	Material* material = shortest_hit_object->GetMaterial();
 
 	Vector hit_point = ray.origin + ray.direction * shortest_hit_dist;
 	Vector rev_ray_dir = ray.direction * (-1);
+	printf("HIT POINT IS %f, %f, %f\n", hit_point.x, hit_point.y, hit_point.z);
 	Vector normal_vec = shortest_hit_object->getShadingNormal(rev_ray_dir, hit_point); // normal direction might be wrong - sphere eg. what if ray comes from inside
 
 	// To account for acne spots
-	hit_point = hit_point + normal_vec * EPSILON;
+	Vector mod_hit_point = hit_point + normal_vec * EPSILON;
 	Color colour = Color();
 
 	for (int i = 0; i < scene->getNumLights(); i++)
 	{
 		Light* light = scene->getLight(i);
-		Vector light_direction = (light->position - hit_point).normalize();
+		Vector light_dir = (light->position - hit_point).normalize();
 		
-		float light_normal_dot_product = light_direction * normal_vec;
+		float light_normal_dot_product = light_dir * normal_vec;
 
 		if (light_normal_dot_product < 0)
 			continue;
 
-		Ray shadow_ray(hit_point, light_direction);
+		Ray shadow_ray(mod_hit_point, light_dir);
 		bool in_shadow = false;
 
 		for (int j = 0; j < scene->getNumObjects(); j++)
@@ -506,7 +525,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 			if (scene->getObject(j)->intercepts(shadow_ray, hit_dist))
 			{
 				in_shadow = true;
-				//printf("LIGHT %d INTERCEPTED BY %d WITH HIT DIST = %f\n", i, j, hit_dist);
 				break;
 			}
 		}
@@ -514,73 +532,73 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		if (in_shadow)
 			continue;
 
-		float diffuse_coeff = material->GetDiffuse() * light_normal_dot_product;
+		Color diffuse_colour = material->GetDiffColor() * material->GetDiffuse() * light_normal_dot_product;
 
 		// Halfway vector approximation
-		Vector halfway_vec = (light_direction + rev_ray_dir).normalize();
-		float specular_coeff = material->GetSpecular() * pow((halfway_vec * normal_vec), material->GetShine());
-		
-		//printf("LIGHT COLOUR IS (%f, %f, %f); diff+spec=%f\n", light->color.r(), light->color.g(), light->color.b(), diffuse_coeff + specular_coeff);
+		Vector halfway_vec = (light_dir + rev_ray_dir).normalize();
+		Color specular_colour = material->GetSpecColor() * material->GetSpecular() * pow((halfway_vec * normal_vec), material->GetShine());
 
-		colour += material->GetDiffColor() * diffuse_coeff + material->GetSpecColor() * specular_coeff;
+		colour += light->color * (diffuse_colour + specular_colour);
 	}
-
-	return colour;
 
 	if (depth >= MAX_DEPTH || (material->GetTransmittance() == 0 && material->GetReflection() == 0))
 		return colour;
 
-	if (material->GetTransmittance() != 0) {
-		// Index of refraction of new medium where the ray will travel
-		float ior_t = material->GetRefrIndex();
+	float cos_theta_i = normal_vec * rev_ray_dir; // Because both vectors are normalised
 
-		float cos_theta_i = -(normal_vec * ray.direction); // Because both vectors are normalised
-		Vector tangent_vec = (ray.direction + normal_vec * cos_theta_i);
-		float sin_theta_i = tangent_vec.length();
-		tangent_vec = tangent_vec.normalize();
+	// printf("GETTING REFLECTED RAY CASE 1 ");
+	if (material->GetTransmittance() == 0)
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, mod_hit_point, material, depth, ior_i, shortest_hit_dist);
 
-		float sin_theta_t = sin_theta_i * ior_i / ior_t;
+	return colour;
 
-		if (sin_theta_t > 1)
-			return colour;
+	Vector tangent_vec = (ray.direction + normal_vec * cos_theta_i);
+	float sin_theta_i = tangent_vec.length();
+	tangent_vec = tangent_vec.normalize();
 
-		float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
+	// Index of refraction of new medium where the ray will travel
+	float ior_t = material->GetRefrIndex();
 
-		//Dieletric (reflection + refraction)
+	float sin_theta_t = sin_theta_i * ior_i / ior_t;
+	
+	//printf("GETTING REFLECTED RAY CASE 2 ");
+	if (sin_theta_t > 1)
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, mod_hit_point, material, depth, ior_i, shortest_hit_dist);
 
-		//Schlick's approximation
-		float R0 = pow( (ior_i - ior_t) / (ior_i + ior_t), 2);
+	float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
 
-		//TODO: is this correct? What about the critical angle
-		float cos_theta_Kr = ior_i > ior_t ? cos_theta_t : cos_theta_i;
-		float Kr = R0 + (1 - R0) * pow(1 - cos_theta_Kr, 5);
+	//Dieletric (reflection + refraction)
 
-		// Reflection --> only if object isn't diffuse
-		Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
-		Ray reflected_ray(hit_point, reflected_ray_direction);
+	//Schlick's approximation
+	float R0 = pow( (ior_i - ior_t) / (ior_i + ior_t), 2);
 
-		Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
-		colour += reflected_colour * Kr;
+	//TODO: is this correct? What about the critical angle
+	float cos_theta_Kr = ior_i > ior_t ? cos_theta_t : cos_theta_i;
+	float Kr = R0 + (1 - R0) * pow(1 - cos_theta_Kr, 5);
 
-		//what is this?
-		//colour = colour * shortest_hit_object->GetMaterial()->GetSpecular() + reflected_colour;
+	// Reflection --> only if object isn't diffuse
+	Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
+	Ray reflected_ray(hit_point, reflected_ray_direction);
 
-		// Refraction --> only if object isn't diffuse
-		//if (sin_theta_t > 1) // In case of total internal reflection
-			//return colour;
+	printf("GETTING REFLECTED RAY CASE 3 ");
+	Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
+	colour += reflected_colour * Kr;
 
-		Vector refracted_ray_direction = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
-		Ray refracted_ray(hit_point, refracted_ray_direction);
+	//what is this?
+	//colour = colour * shortest_hit_object->GetMaterial()->GetSpecular() + reflected_colour;
 
-		Color refracted_colour = rayTracing(refracted_ray, depth + 1, ior_t);
-		colour += refracted_colour * (1 - Kr);
-		//why this?
-		//colour = colour * shortest_hit_object->GetMaterial()->GetTransmittance() + refracted_colour;	
+	// Refraction --> only if object isn't diffuse
+	//if (sin_theta_t > 1) // In case of total internal reflection
+		//return colour;
 
-	}
-	else if (material->GetReflection() != 0) {
-		
-	}
+	Vector refracted_ray_direction = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
+	Ray refracted_ray(hit_point, refracted_ray_direction);
+
+	printf("GETTING REFRACTED RAY ");
+	Color refracted_colour = rayTracing(refracted_ray, depth + 1, ior_t);
+	colour += refracted_colour * (1 - Kr);
+	//why this?
+	//colour = colour * shortest_hit_object->GetMaterial()->GetTransmittance() + refracted_colour;	
 
 	return colour;
 }
@@ -610,6 +628,7 @@ void renderScene()
 			pixel.y = y + 0.5f;
 
 			Ray ray = scene->GetCamera()->PrimaryRay(pixel); // function from camera.h
+			//printf("GETTING PRIMARY RAY ");
 			color = rayTracing(ray, 1, 1.0).clamp();
 
 			img_Data[counter++] = u8fromfloat((float)color.r());
