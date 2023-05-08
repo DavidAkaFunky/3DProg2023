@@ -486,7 +486,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	for (int i = 0; i < scene->getNumLights(); i++)
 	{
 		Light* light = scene->getLight(i);
-		Vector light_direction = light->position - hit_point;
+		Vector light_direction = light->position - hit_point; // maybe shouldn't use the new hit point
 		float light_normal_dot_product = light_direction * normal_vec;
 
 		if (light_normal_dot_product < 0)
@@ -506,7 +506,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		if (in_shadow)
 			continue;
 
-		//TODO: no ambient light component ? Is this correct at all
+		//TODO: Is this correct at all? Should clamp the color here?
 		colour += shortest_hit_object->GetMaterial()->GetDiffColor() + shortest_hit_object->GetMaterial()->GetSpecColor();
 	}
 
@@ -535,7 +535,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	else
 		Kr = R0 + (1 - R0) * pow(1 - cos_theta_i, 5);
 
-	// Reflection
+	// Reflection --> only if object isn't diffuse
 	Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
 	Ray reflected_ray(hit_point, reflected_ray_direction);
 
@@ -545,7 +545,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	//what is this?
 	//colour = colour * shortest_hit_object->GetMaterial()->GetSpecular() + reflected_colour;
 
-	// Refraction
+	// Refraction --> only if object isn't diffuse
 	//if (sin_theta_t > 1) // In case of total internal reflection
 		//return colour;
 
@@ -555,7 +555,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Color refracted_colour = rayTracing(refracted_ray, depth + 1, ior_t);
 	colour += refracted_colour * (1 - Kr);
 	//why this?
-	colour = colour * shortest_hit_object->GetMaterial()->GetTransmittance() + refracted_colour;
+	//colour = colour * shortest_hit_object->GetMaterial()->GetTransmittance() + refracted_colour;
 
 	return colour;
 }
