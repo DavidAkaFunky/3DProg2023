@@ -70,6 +70,7 @@ public:
 	void SetMaterial( Material *a_Mat ) { m_Material = a_Mat; }
 	virtual bool intercepts( Ray& r, float& dist ) = 0;
 	virtual Vector getNormal( Vector point ) = 0;
+	Vector getShadingNormal(Vector incident, Vector point);
 	virtual AABB GetBoundingBox() { return AABB(); }
 	Vector getCentroid(void) { return GetBoundingBox().centroid(); }
 

@@ -7,15 +7,6 @@
 #include "macros.h"
 
 
-Vector crossProduct(Vector vA, Vector vB) {
-	Vector c_P;
-	c_P.x = vA.y * vB.z - vA.z * vB.y;
-	c_P.y = -(vA.x * vB.z - vA.z * vB.x);
-	c_P.z = vA.x * vB.y - vA.y * vB.x;
-	return c_P;
-}
-
-
 Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 {
 	points[0] = P0; points[1] = P1; points[2] = P2;
@@ -70,19 +61,19 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	// edge 0
 	Vector edge0 = points[1] - points[0];
 	Vector vp0 = P - points[0];
-	C = crossProduct(edge0, vp0);
+	C = edge0%vp0;
 	if (normal * C < 0) return false;
 
 	// edge 1
 	Vector edge1 = points[2] - points[1];
 	Vector vp1 = P - points[1];
-	C = crossProduct(edge1, vp1);
+	C = edge1%vp1;
 	if (normal * C < 0)  return false;
 
 	// edge 2
 	Vector edge2 = points[0] - points[2];
 	Vector vp2 = P - points[2];
-	C = crossProduct(edge2, vp2);
+	C = edge2%vp2;
 	if (normal * C < 0) return false;
 
 	return true; // this ray hits the triangle
@@ -144,24 +135,20 @@ Vector Plane::getNormal(Vector point)
 
 bool Sphere::intercepts(Ray& r, float& t )
 {
-    Vector oc = r.origin - center;
+    Vector oc = center - r.origin;
     float b = r.direction * oc;
     float c = pow(oc.length(), 2) - SqRadius;
+	
+	if (c < 0 && b <= 0)
+		return false;
+
     float delta = pow(b, 2) - c;
 
-    if (delta < 0)
+    if (delta <= 0)
         return false;
 
     float sqrtDelta = sqrt(delta);
-    float t1 = -b - sqrtDelta, t2 = -b + sqrtDelta;
-
-    if (t1 > t2)
-        std::swap(t1, t2);
-
-    if (t2 < 0)
-        return false;
-
-    t = (t1 >= 0) ? t1 : t2;
+	t = (c > 0 ? b - sqrtDelta : b + sqrtDelta);
 
     return true;
 }
@@ -193,37 +180,68 @@ AABB aaBox::GetBoundingBox() {
 
 bool aaBox::intercepts(Ray& ray, float& t)
 {
+	
 	//tirado dos slides (?)
+	double tx_min, ty_min, tz_min;
+	double tx_max, ty_max, tz_max;
+
 	double a = 1.0 / ray.direction.x;
+	if(a >= 0) {
+		tx_min = (min.x - ray.origin.x) * a;
+		tx_max = (max.x - ray.origin.x) * a;
+	}
+	else {
+		tx_min = (max.x - ray.origin.x) * a;
+		tx_max = (min.x - ray.origin.x) * a;
+	}
+
 	double b = 1.0 / ray.direction.y;
+	if(b >= 0) {
+		ty_min = (min.y - ray.origin.y) * b;
+		ty_max = (max.y - ray.origin.y) * b;
+	}
+	else {
+		ty_min = (max.y - ray.origin.y) * b;
+		ty_max = (min.y - ray.origin.y) * b;
+	}
+
 	double c = 1.0 / ray.direction.z;
+	if(c >= 0) {
+		tz_min = (min.z - ray.origin.z) * c;
+		tz_max = (max.z - ray.origin.z) * c;
+	}
+	else {
+		ty_min = (max.z - ray.origin.z) * c;
+		ty_max = (min.z - ray.origin.z) * c;
+	}
+
 	float tE, tL; //entering and leaving t values 
 	Vector face_in, face_out; // normals
 	// find largest tE, entering t value
 
-	if (min.x > min.y) {
-		tE = min.x;
+	if (tx_min > ty_min) {
+		tE = tx_min;
 		face_in = (a >= 0.0) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
 	}
 	else {
-		tE = min.y;
+		tE = ty_min;
 		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
 	}
-	if (min.z > tE) {
-		tE = min.z;
+	if (tz_min > tE) {
+		tE = tz_min;
 		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
 	}
 	// find smallest tL, leaving t value
-	if (max.z < max.y) {
-		tL = max.z;
+	if (tx_max < ty_max) {
+		tL = tx_max;
 		face_out = (a >= 0.0) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
 	}
 	else {
-		tL = max.y;
+		tL = ty_max;
 		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
 	}
-	if (max.z < tL) {
-		tL = max.z;
+	if (tz_max < tL) {
+		tL = tz_max;
 		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
 	}
 	if (tE < tL && tL > 0) { // condition for a hit
@@ -243,6 +261,10 @@ bool aaBox::intercepts(Ray& ray, float& t)
 Vector aaBox::getNormal(Vector point)
 {
 	return Normal;
+}
+
+Vector Object::getShadingNormal(Vector incident, Vector point) {
+	return incident * point > 0 ? getNormal(point) : getNormal(point) * (-1);
 }
 
 Scene::Scene()
