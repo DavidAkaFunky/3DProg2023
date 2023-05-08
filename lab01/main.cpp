@@ -464,12 +464,14 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 {
 	float hit_dist, shortest_hit_dist = std::numeric_limits<float>::max();
 	Object* shortest_hit_object = NULL;
+	int shortest_hit_index = -1;
 
 	for (int i = 0; i < scene->getNumObjects(); i++) {
 		Object* object = scene->getObject(i);
 		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
 			shortest_hit_dist = hit_dist;
 			shortest_hit_object = object;
+			shortest_hit_index = i;
 		}
 	}
 
@@ -489,7 +491,8 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	for (int i = 0; i < scene->getNumLights(); i++)
 	{
 		Light* light = scene->getLight(i);
-		Vector light_direction = light->position - hit_point; // maybe shouldn't use the new hit point
+		Vector light_direction = (light->position - hit_point).normalize();
+		
 		float light_normal_dot_product = light_direction * normal_vec;
 
 		if (light_normal_dot_product < 0)
@@ -500,41 +503,49 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 		for (int j = 0; j < scene->getNumObjects(); j++)
 		{
-			Object* object = scene->getObject(j);
-			if (object != shortest_hit_object && object->intercepts(shadow_ray, hit_dist))
+			if (scene->getObject(j)->intercepts(shadow_ray, hit_dist))
 			{
 				in_shadow = true;
+				//printf("LIGHT %d INTERCEPTED BY %d WITH HIT DIST = %f\n", i, j, hit_dist);
 				break;
 			}
 		}
+
 		if (in_shadow)
 			continue;
-
-		puts("GOT HERE3!!!!\n");
 
 		float diffuse_coeff = material->GetDiffuse() * light_normal_dot_product;
 
 		// Halfway vector approximation
-		float specular_coeff = material->GetSpecular() * pow(((light_direction + rev_ray_dir).normalize() * normal_vec), material->GetShine());
+		Vector halfway_vec = (light_direction + rev_ray_dir).normalize();
+		float specular_coeff = material->GetSpecular() * pow((halfway_vec * normal_vec), material->GetShine());
 		
-		colour += light->color * (diffuse_coeff + specular_coeff);
+		//printf("LIGHT COLOUR IS (%f, %f, %f); diff+spec=%f\n", light->color.r(), light->color.g(), light->color.b(), diffuse_coeff + specular_coeff);
+
+		colour += material->GetDiffColor() * diffuse_coeff + material->GetSpecColor() * specular_coeff;
 	}
+
+	return colour;
 
 	if (depth >= MAX_DEPTH || (material->GetTransmittance() == 0 && material->GetReflection() == 0))
 		return colour;
 
-	// Index of refraction of new medium where the ray will travel
-	float ior_t = material->GetRefrIndex();
-
-	float cos_theta_i = - (normal_vec * ray.direction); // Because both vectors are normalised
-	Vector tangent_vec = (ray.direction + normal_vec * cos_theta_i);
-	float sin_theta_i = tangent_vec.length();
-	tangent_vec = tangent_vec.normalize();
-
-	float sin_theta_t = sin_theta_i * ior_i / ior_t;
-	float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
-
 	if (material->GetTransmittance() != 0) {
+		// Index of refraction of new medium where the ray will travel
+		float ior_t = material->GetRefrIndex();
+
+		float cos_theta_i = -(normal_vec * ray.direction); // Because both vectors are normalised
+		Vector tangent_vec = (ray.direction + normal_vec * cos_theta_i);
+		float sin_theta_i = tangent_vec.length();
+		tangent_vec = tangent_vec.normalize();
+
+		float sin_theta_t = sin_theta_i * ior_i / ior_t;
+
+		if (sin_theta_t > 1)
+			return colour;
+
+		float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
+
 		//Dieletric (reflection + refraction)
 
 		//Schlick's approximation

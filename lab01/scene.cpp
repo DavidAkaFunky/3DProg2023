@@ -139,7 +139,7 @@ bool Sphere::intercepts(Ray& r, float& t )
     float b = r.direction * oc;
     float c = pow(oc.length(), 2) - SqRadius;
 	
-	if (c < 0 && b <= 0)
+	if (c > 0 && b <= 0)
 		return false;
 
     float delta = pow(b, 2) - c;
