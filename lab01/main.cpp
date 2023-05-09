@@ -483,13 +483,13 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	for (int i = 0; i < scene->getNumObjects(); i++) {
 		Object* object = scene->getObject(i);
-		//printf("SHOOTING ON OBJECT %d\n", i);
 		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
+			//printf("SHOOTING ON OBJECT %d ", i);
 			shortest_hit_dist = hit_dist;
 			shortest_hit_object = object;
 			shortest_hit_index = i;
-			//printf("SHORTEST HIT DISTANCE IS %f", shortest_hit_dist);
-			//cout << "TYPE IS " << typeid(*object).name();
+			//printf(" SHORTEST HIT DISTANCE IS %f ", shortest_hit_dist);
+			//cout << "TYPE IS " << typeid(*object).name() << "\n";
 		}
 	}
 
@@ -550,8 +550,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	if (material->GetTransmittance() == 0)
 		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, mod_hit_point, material, depth, ior_i, shortest_hit_dist);
 
-	return colour;
-
 	Vector tangent_vec = (ray.direction + normal_vec * cos_theta_i);
 	float sin_theta_i = tangent_vec.length();
 	tangent_vec = tangent_vec.normalize();
@@ -583,7 +581,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	//printf("GETTING REFLECTED RAY CASE 3 ");
 	Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
 	colour += reflected_colour * Kr;
-
 
 	// Refraction --> only if object isn't diffuse
 	//if (sin_theta_t > 1) // In case of total internal reflection
@@ -618,7 +615,6 @@ void renderScene()
 		for (int x = 0; x < RES_X; x++)
 		{
 			Color color;
-
 			Vector pixel; // viewport coordinates
 			pixel.x = x + 0.5f;
 			pixel.y = y + 0.5f;

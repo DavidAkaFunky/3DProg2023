@@ -84,6 +84,7 @@ class Plane : public Object
 protected:
   Vector	 PN;
   float 	 D;
+  Vector     points[3];
 
 public:
 		 Plane		(Vector& PNc, float Dc);

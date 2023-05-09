@@ -12,13 +12,12 @@ Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 	points[0] = P0; points[1] = P1; points[2] = P2;
 
 	/* Calculate the normal */
-	normal = Vector(0, 0, 0);
+	normal = (P1 - P0) % (P2 - P0);
 	normal.normalize();
 
 	//YOUR CODE to Calculate the Min and Max for bounding box
 	Min = Vector(+FLT_MAX, +FLT_MAX, +FLT_MAX);
 	Max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-
 
 	// enlarge the bounding box a bit just in case...
 	Min -= EPSILON;
@@ -44,8 +43,9 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 
 	//reference: scratch a pixel
 	//any point works
-	Vector p0 = points[0];
-	float D = -(r.origin.x * p0.x + r.origin.y * p0.y + r.origin.z * p0.z);
+
+	// Regular normal or shading normal?
+	float D = -(r.origin * points[0]);
 	float vd = r.direction * normal;
 	float v0 = -(normal * r.origin + D);
 
@@ -91,7 +91,8 @@ Plane::Plane(Vector& P0, Vector& P1, Vector& P2)
    float l;
 
    //Calculate the normal plane: counter-clockwise vectorial product.
-   PN = Vector(0, 0, 0);		
+   points[0] = P0; points[1] = P1; points[2] = P2;
+   PN = (P1 - P0) % (P2 - P0);
 
    if ((l=PN.length()) == 0.0)
    {
@@ -101,7 +102,7 @@ Plane::Plane(Vector& P0, Vector& P1, Vector& P2)
    {
      PN.normalize();
 	 //Calculate D
-     D  = 0.0f;
+     D = - (PN * P0); // Could by any of the others
    }
 }
 
@@ -114,23 +115,22 @@ bool Plane::intercepts( Ray& r, float& t )
 	// A plane is defined by the equation: Ax + By + Cz + D = 0, or the vector [A B C D].
 	// A, B, and C, define the normal to the plane, Pn = [A B C].
 	// the distance from the origin [0 0 0] to the plane is D.
-	Vector shading_normal = getShadingNormal(r.direction, r.origin);
-	float vd = r.direction * shading_normal;
+	// 
+	// Regular normal or shading normal?
+	float vd = PN * r.direction;
 
+	//printf("%f, %f, %f\n", PN.x, PN.y, PN.z);
+	//printf("%f, %f, %f\n", r.direction.x, r.direction.y, r.direction.z);
 	//ray is parallel to plane
 	if (vd == 0)
 		return false;
 
-	float v0 = -(shading_normal * r.origin + D);
+	float v0 = -(PN * r.origin + D);
 
 	t = v0/vd;
 
-	//intersection is behind the origin of the ray
-	if (t < 0)
-		return false;
-	
-	printf("INSIDE PLANE, T IS %f\n", t);
-	return true;
+	//intersection cannot be behind the origin of the ray
+	return t >= 0;
 }
 
 Vector Plane::getNormal(Vector point) 
@@ -191,12 +191,8 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	double tx_max = 0, ty_max = 0, tz_max = 0;
 
 	double a = 1.0 / ray.direction.x;
-	if (ray.direction.x == 0) {
-		//printf("CASE 1 ");
-		tx_max = std::numeric_limits<float>::max();
-		tx_min = -tx_max;
-	}
-	else if (a >= 0) {
+
+	if (a >= 0) {
 		//printf("CASE 2, a: %f, ray.direction.x = %f ", a, ray.direction.x);
 		tx_min = (min.x - ray.origin.x) * a;
 		tx_max = (max.x - ray.origin.x) * a;
@@ -275,9 +271,10 @@ bool aaBox::intercepts(Ray& ray, float& t)
 			t = tL; // ray hits inside surface
 			Normal = face_out;
 		}
-		//printf("t = %f, normal is %f, %f, %f\n", t, Normal.x, Normal.y, Normal.z);
+		printf("t = %f, normal is %f, %f, %f\n", t, Normal.x, Normal.y, Normal.z);
 		return true;
 	}
+	printf("RETURNED FALSE\n");
 	return false;
 }
 
