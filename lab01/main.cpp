@@ -466,11 +466,11 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 	// Reflection
 	Vector refl_ray_dir = normal_vec * cos_theta_i * 2 - rev_ray_dir;
 	Ray refl_ray(hit_point, refl_ray_dir);
-	printf("ORIGINAL RAY IS %f, %f, %f\n", rev_ray_dir.x, rev_ray_dir.y, rev_ray_dir.z);
-	printf("NORMAL IS %f, %f, %f\n", normal_vec.x, normal_vec.y, normal_vec.z);
-	printf("cos theta i is %f\n", cos_theta_i);
-	printf("SHORTEST HIT DISTANCE IS %f\n", x);
-	printf("RAY IS %f, %f, %f\n", refl_ray_dir.x, refl_ray_dir.y, refl_ray_dir.z);
+	//printf("ORIGINAL RAY IS %f, %f, %f\n", rev_ray_dir.x, rev_ray_dir.y, rev_ray_dir.z);
+	//printf("NORMAL IS %f, %f, %f\n", normal_vec.x, normal_vec.y, normal_vec.z);
+	//printf("cos theta i is %f\n", cos_theta_i);
+	//printf("SHORTEST HIT DISTANCE IS %f\n", x);
+	//printf("RAY IS %f, %f, %f\n", refl_ray_dir.x, refl_ray_dir.y, refl_ray_dir.z);
 	Color refl_colour = rayTracing(refl_ray, depth + 1, ior_i);
 	return refl_colour * material->GetReflection();
 }
@@ -483,13 +483,13 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	for (int i = 0; i < scene->getNumObjects(); i++) {
 		Object* object = scene->getObject(i);
-		printf("SHOOTING ON OBJECT %d\n", i);
+		//printf("SHOOTING ON OBJECT %d\n", i);
 		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
 			shortest_hit_dist = hit_dist;
 			shortest_hit_object = object;
 			shortest_hit_index = i;
-			printf("SHORTEST HIT DISTANCE IS %f", shortest_hit_dist);
-			cout << "TYPE IS " << typeid(*object).name();
+			//printf("SHORTEST HIT DISTANCE IS %f", shortest_hit_dist);
+			//cout << "TYPE IS " << typeid(*object).name();
 		}
 	}
 
@@ -500,7 +500,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	Vector hit_point = ray.origin + ray.direction * shortest_hit_dist;
 	Vector rev_ray_dir = ray.direction * (-1);
-	printf("HIT POINT IS %f, %f, %f\n", hit_point.x, hit_point.y, hit_point.z);
+	//printf("HIT POINT IS %f, %f, %f\n", hit_point.x, hit_point.y, hit_point.z);
 	Vector normal_vec = shortest_hit_object->getShadingNormal(rev_ray_dir, hit_point); // normal direction might be wrong - sphere eg. what if ray comes from inside
 
 	// To account for acne spots
@@ -580,12 +580,10 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
 	Ray reflected_ray(hit_point, reflected_ray_direction);
 
-	printf("GETTING REFLECTED RAY CASE 3 ");
+	//printf("GETTING REFLECTED RAY CASE 3 ");
 	Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
 	colour += reflected_colour * Kr;
 
-	//what is this?
-	//colour = colour * shortest_hit_object->GetMaterial()->GetSpecular() + reflected_colour;
 
 	// Refraction --> only if object isn't diffuse
 	//if (sin_theta_t > 1) // In case of total internal reflection
@@ -594,11 +592,9 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Vector refracted_ray_direction = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
 	Ray refracted_ray(hit_point, refracted_ray_direction);
 
-	printf("GETTING REFRACTED RAY ");
+	//printf("GETTING REFRACTED RAY ");
 	Color refracted_colour = rayTracing(refracted_ray, depth + 1, ior_t);
 	colour += refracted_colour * (1 - Kr);
-	//why this?
-	//colour = colour * shortest_hit_object->GetMaterial()->GetTransmittance() + refracted_colour;	
 
 	return colour;
 }
