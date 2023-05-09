@@ -53,12 +53,12 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	if (vd == 0)
 		return false;
 
-	float ti = v0 / vd;
+	t = v0 / vd;
 
-	if (ti < 0)
+	if (t < 0)
 		return false;
 
-	Vector P = r.origin + r.direction * ti;
+	Vector P = r.origin + r.direction * t;
 	Vector C; //perpendicular to triangle
 
 	// edge 0
