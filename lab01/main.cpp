@@ -541,6 +541,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		colour += light->color * (diffuse_colour + specular_colour);
 	}
 
+
 	if (depth >= MAX_DEPTH || (material->GetTransmittance() == 0 && material->GetReflection() == 0))
 		return colour;
 

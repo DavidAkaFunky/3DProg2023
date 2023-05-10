@@ -39,13 +39,11 @@ Vector Triangle::getNormal(Vector point)
 
 bool Triangle::intercepts(Ray& r, float& t ) {
 
-	// TODO: INTERCEPTION WORKS BUT T IS WRONG
-
 	//reference: scratch a pixel
 	//any point works
-
-	// Regular normal or shading normal?
-	float D = -(r.origin * points[0]);
+	//TODO: CAN THIS BE DONE LIKE THIS?
+	
+	float D = -(normal * points[0]);
 	float vd = r.direction * normal;
 	float v0 = -(normal * r.origin + D);
 
@@ -61,6 +59,7 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	Vector P = r.origin + r.direction * t;
 	Vector C; //perpendicular to triangle
 
+	//In case any error happens check edge directions are correct
 	// edge 0
 	Vector edge0 = points[1] - points[0];
 	Vector vp0 = P - points[0];
@@ -271,10 +270,10 @@ bool aaBox::intercepts(Ray& ray, float& t)
 			t = tL; // ray hits inside surface
 			Normal = face_out;
 		}
-		printf("t = %f, normal is %f, %f, %f\n", t, Normal.x, Normal.y, Normal.z);
+		//printf("t = %f, normal is %f, %f, %f\n", t, Normal.x, Normal.y, Normal.z);
 		return true;
 	}
-	printf("RETURNED FALSE\n");
+	//printf("RETURNED FALSE\n");
 	return false;
 }
 
