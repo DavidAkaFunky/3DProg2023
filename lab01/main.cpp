@@ -35,6 +35,7 @@ bool P3F_scene = true; // choose between P3F scene or a built-in random scene
 #define CAPTION "Whitted Ray-Tracer"
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
+#define ROUGHNESS 0.00001
 
 unsigned int FrameCount = 0;
 
@@ -460,11 +461,20 @@ void setupGLUT(int argc, char *argv[])
 
 /////////////////////////////////////////////////////YOUR CODE HERE///////////////////////////////////////////////////////////////////////////////////////
 
+Vector rand_in_unit_sphere() {
+	float x, y, z;
+	x = (float)rand() / RAND_MAX;
+	y = (float)rand() / RAND_MAX;
+	z = (float)rand() / RAND_MAX;
+	return Vector(x, y, z);
+}
+
 Color rayTracing(Ray ray, int depth, float ior_i);
 
-Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point, Material* material, int depth, float ior_i, float x) {
+Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point, 
+	Material* material, int depth, float ior_i, float x) {
 	// Reflection
-	Vector refl_ray_dir = normal_vec * cos_theta_i * 2 - rev_ray_dir;
+	Vector refl_ray_dir = normal_vec * cos_theta_i * 2 - rev_ray_dir + rand_in_unit_sphere() * ROUGHNESS;
 	Ray refl_ray(hit_point, refl_ray_dir);
 
 	Color refl_colour = rayTracing(refl_ray, depth + 1, ior_i);
