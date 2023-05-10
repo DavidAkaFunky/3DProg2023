@@ -35,7 +35,7 @@ bool P3F_scene = true; // choose between P3F scene or a built-in random scene
 #define CAPTION "Whitted Ray-Tracer"
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
-#define ROUGHNESS 0.00001
+#define ROUGHNESS 0.25
 
 unsigned int FrameCount = 0;
 
@@ -461,11 +461,16 @@ void setupGLUT(int argc, char *argv[])
 
 /////////////////////////////////////////////////////YOUR CODE HERE///////////////////////////////////////////////////////////////////////////////////////
 
+double get_rand(double min, double max) {
+	return min + static_cast <double> (rand()) / (static_cast <double> (RAND_MAX / (max - min)));
+}
+
 Vector rand_in_unit_sphere() {
-	float x, y, z;
-	x = (float)rand() / RAND_MAX;
-	y = (float)rand() / RAND_MAX;
-	z = (float)rand() / RAND_MAX;
+	double theta = get_rand(0, 2 * PI);
+	double z = get_rand(-1, 1);
+	double c = sqrt(1 - pow(z, 2));
+	double x = c * cos(theta);
+	double y = c * sin(theta);
 	return Vector(x, y, z);
 }
 
@@ -474,7 +479,7 @@ Color rayTracing(Ray ray, int depth, float ior_i);
 Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point, 
 	Material* material, int depth, float ior_i, float x) {
 	// Reflection
-	Vector refl_ray_dir = normal_vec * cos_theta_i * 2 - rev_ray_dir + rand_in_unit_sphere() * ROUGHNESS;
+	Vector refl_ray_dir = (normal_vec * cos_theta_i * 2 - rev_ray_dir + rand_in_unit_sphere() * ROUGHNESS).normalize();
 	Ray refl_ray(hit_point, refl_ray_dir);
 
 	Color refl_colour = rayTracing(refl_ray, depth + 1, ior_i);
@@ -540,8 +545,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		Color diffuse_colour = material->GetDiffColor() * material->GetDiffuse() * light_normal_dot_product;
 
 		// Halfway vector approximation
-		Vector halfway_vec = light_dir + rev_ray_dir;
-		halfway_vec.normalize();
+		Vector halfway_vec = (light_dir + rev_ray_dir).normalize();
 
 		float halfway_product = halfway_vec * normal_vec;
 		//TODO: this is always zero, is it supposed to be?

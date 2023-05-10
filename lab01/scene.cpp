@@ -43,14 +43,15 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	//any point works
 	//TODO: CAN THIS BE DONE LIKE THIS?
 	
-	float D = -(normal * points[0]);
 	float vd = r.direction * normal;
-	float v0 = -(normal * r.origin + D);
-
+	printf("vd = %f ", vd);
 	//ray is parallel to triangle
 	if (vd == 0)
 		return false;
 
+	float D = -(normal * points[0]);
+	float v0 = -(normal * r.origin + D);
+	printf("v0 = %f\n", v0);
 	t = v0 / vd;
 
 	if (t < 0)
