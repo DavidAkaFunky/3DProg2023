@@ -28,7 +28,7 @@
 // Enable OpenGL drawing.
 bool drawModeEnabled = false;
 
-bool P3F_scene = true; // choose between P3F scene or a built-in random scene
+bool P3F_scene = false; // choose between P3F scene or a built-in random scene
 
 #define MAX_DEPTH 4 // number of bounces
 
@@ -56,13 +56,13 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
-float *colors;
-float *vertices;
+float* colors;
+float* vertices;
 int size_vertices;
 int size_colors;
 
 // Array of Pixels to be stored in a file by using DevIL library
-uint8_t *img_Data;
+uint8_t* img_Data;
 
 GLfloat m[16]; // projection matrix initialized by ortho function
 
@@ -72,10 +72,10 @@ GLuint VboId[2];
 GLuint VertexShaderId, FragmentShaderId, ProgramId;
 GLint UniformId;
 
-Scene *scene = NULL;
+Scene* scene = NULL;
 
-Grid *grid_ptr = NULL;
-BVH *bvh_ptr = NULL;
+Grid* grid_ptr = NULL;
+BVH* bvh_ptr = NULL;
 accelerator Accel_Struct = NONE;
 
 int RES_X, RES_Y;
@@ -88,7 +88,7 @@ bool isOpenGLError()
 {
 	bool isError = false;
 	GLenum errCode;
-	const GLubyte *errString;
+	const GLubyte* errString;
 	while ((errCode = glGetError()) != GL_NO_ERROR)
 	{
 		isError = true;
@@ -109,34 +109,34 @@ void checkOpenGLError(std::string error)
 
 /////////////////////////////////////////////////////////////////////// SHADERs
 
-const GLchar *VertexShader =
-	{
-		"#version 430 core\n"
+const GLchar* VertexShader =
+{
+	"#version 430 core\n"
 
-		"in vec2 in_Position;\n"
-		"in vec3 in_Color;\n"
-		"uniform mat4 Matrix;\n"
-		"out vec4 color;\n"
+	"in vec2 in_Position;\n"
+	"in vec3 in_Color;\n"
+	"uniform mat4 Matrix;\n"
+	"out vec4 color;\n"
 
-		"void main(void)\n"
-		"{\n"
-		"	vec4 position = vec4(in_Position, 0.0, 1.0);\n"
-		"	color = vec4(in_Color, 1.0);\n"
-		"	gl_Position = Matrix * position;\n"
+	"void main(void)\n"
+	"{\n"
+	"	vec4 position = vec4(in_Position, 0.0, 1.0);\n"
+	"	color = vec4(in_Color, 1.0);\n"
+	"	gl_Position = Matrix * position;\n"
 
-		"}\n"};
+	"}\n" };
 
-const GLchar *FragmentShader =
-	{
-		"#version 430 core\n"
+const GLchar* FragmentShader =
+{
+	"#version 430 core\n"
 
-		"in vec4 color;\n"
-		"out vec4 out_Color;\n"
+	"in vec4 color;\n"
+	"out vec4 out_Color;\n"
 
-		"void main(void)\n"
-		"{\n"
-		"	out_Color = color;\n"
-		"}\n"};
+	"void main(void)\n"
+	"{\n"
+	"	out_Color = color;\n"
+	"}\n" };
 
 void createShaderProgram()
 {
@@ -239,7 +239,7 @@ void drawPoints()
 	checkOpenGLError("ERROR: Could not draw scene.");
 }
 
-ILuint saveImgFile(const char *filename)
+ILuint saveImgFile(const char* filename)
 {
 	ILuint ImageId;
 
@@ -279,7 +279,7 @@ void cleanup()
 }
 
 void ortho(float left, float right, float bottom, float top,
-		   float nearp, float farp)
+	float nearp, float farp)
 {
 	m[0 * 4 + 0] = 2 / (right - left);
 	m[0 * 4 + 1] = 0.0;
@@ -436,7 +436,7 @@ void setupGLEW()
 	printf("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
-void setupGLUT(int argc, char *argv[])
+void setupGLUT(int argc, char* argv[])
 {
 	glutInit(&argc, argv);
 
@@ -464,9 +464,9 @@ double get_rand(double min, double max) {
 	return min + rand_float() * (max - min);
 }
 
-Vector rand_in_unit_sphere() {
-	double theta = get_rand(0, 2 * PI);
-	double z = get_rand(-1, 1);
+Vector rand_in_unit_sphere(int p, int q, int sqrt_num_samples) {
+	double theta = get_rand(2 * PI * p / sqrt_num_samples, 2 * PI * (p+1) / sqrt_num_samples);
+	double z = get_rand(-1 + 2 * q / sqrt_num_samples, -1 + 2 * (q+1) / sqrt_num_samples);
 	double c = sqrt(1 - pow(z, 2));
 	double x = c * cos(theta);
 	double y = c * sin(theta);
@@ -476,23 +476,36 @@ Vector rand_in_unit_sphere() {
 
 Color rayTracing(Ray ray, int depth, float ior_i);
 
-Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point, 
+Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point,
 	Material* material, int depth, float ior_i, float x) {
 	// Reflection
-	
-	float spp = max(1, scene->GetSamplesPerPixel());
-	Vector avg = Vector(0, 0, 0);
 
-	// TODO: CREATE ANTI-ALIASING-LIKE FUZZINESS
-	for (int i = 0; i < spp; i++) {
-		avg = avg + rand_in_unit_sphere();
+	Vector refl_ray_dir = (normal_vec * cos_theta_i * 2 - rev_ray_dir);
+	float roughness = material->GetRoughness();
+	int spp = 0; // Replace with scene->GetSamplesPerPixel();
+	Color colour = Color();
+	if (roughness > 0 && spp > 0) {
+
+		int sqrt_num_samples = sqrt(spp);
+		Vector mod_refl_ray_dir;
+
+		for (int p = 0; p < sqrt_num_samples; p++) {
+			for (int q = 0; q < sqrt_num_samples; q++) {
+				mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere(p, q, sqrt_num_samples) * roughness).normalize();
+				
+				if (mod_refl_ray_dir * normal_vec < 0) 
+					colour += material->GetSpecColor();
+
+				Ray refl_ray(hit_point, mod_refl_ray_dir);
+
+				Color refl_colour = rayTracing(refl_ray, depth + 1, ior_i);
+				colour += material->GetSpecColor() * refl_colour * material->GetReflection();
+			}
+		}
+
+		return colour * (1.0 / spp);
 	}
-	avg *= (1 / spp);
 
-	Vector refl_ray_dir = (normal_vec * cos_theta_i * 2 - rev_ray_dir + avg * material->GetRoughness()).normalize();
-	
-	if (refl_ray_dir * normal_vec < 0) return material->GetSpecColor();
-	
 	Ray refl_ray(hit_point, refl_ray_dir);
 
 	Color refl_colour = rayTracing(refl_ray, depth + 1, ior_i);
@@ -508,7 +521,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		Object* object = scene->getObject(i);
 		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
 			shortest_hit_dist = hit_dist;
-			shortest_hit_object = object;	
+			shortest_hit_object = object;
 		}
 	}
 
@@ -531,7 +544,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		Light* light = scene->getLight(i);
 		Vector light_dir = light->position - hit_point;
 		light_dir.normalize();
-		
+
 		float light_normal_dot_product = light_dir * normal_vec;
 
 		if (light_normal_dot_product < 0)
@@ -559,8 +572,8 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 		float halfway_product = halfway_vec * normal_vec;
 		//TODO: this is always zero, is it supposed to be?
-		Color specular_colour = material->GetSpecColor() * material->GetSpecular() * pow(halfway_product, material->GetShine()); 
-			
+		Color specular_colour = material->GetSpecColor() * material->GetSpecular() * pow(halfway_product, material->GetShine());
+
 		//printf("Specular");
 		//printf("%f %f %f\n", specular_colour.r(), specular_colour.g(), specular_colour.b());
 
@@ -578,7 +591,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	if (material->GetTransmittance() == 0)
 		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, reflected_hit_point, material, depth, ior_i, shortest_hit_dist);
 
-	//-----------------------------------Dieletric (reflection + refraction)--------------------------
+	//-----------------------------Dielectric (reflection + refraction)--------------------------
 
 	Vector tangent_vec = (ray.direction + normal_vec * cos_theta_i);
 	float sin_theta_i = tangent_vec.length();
@@ -588,29 +601,30 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	float ior_t = material->GetRefrIndex();
 
 	float sin_theta_t = sin_theta_i * ior_i / ior_t;
-	
+
 	//Total Reflection
 	if (sin_theta_t > 1)
 		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, reflected_hit_point, material, depth, ior_i, shortest_hit_dist);
 
 	float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
 
-
 	//Schlick's approximation
-	float R0 = pow( (ior_i - ior_t) / (ior_i + ior_t), 2);
+	float R0 = pow((ior_i - ior_t) / (ior_i + ior_t), 2);
 
 	//TODO: is this correct? What about the critical angle
 	float cos_theta_Kr = ior_i > ior_t ? cos_theta_t : cos_theta_i;
 	float Kr = R0 + (1 - R0) * pow(1 - cos_theta_Kr, 5);
 
 	// Reflection --> only if object isn't diffuse
-	Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
-	Ray reflected_ray(reflected_hit_point, reflected_ray_direction);
+	if (material->GetReflection() > 0) {
+		Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
+		Ray reflected_ray(reflected_hit_point, reflected_ray_direction);
 
-	Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
-	colour += reflected_colour * Kr;
+		Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
+		colour += material->GetSpecColor() * reflected_colour * Kr;
+	}
 
-	Vector refracted_hit_point = hit_point + normal_vec * EPSILON;
+	Vector refracted_hit_point = hit_point - normal_vec * EPSILON;
 	Vector refracted_ray_direction = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
 	Ray refracted_ray(refracted_hit_point, refracted_ray_direction);
 
@@ -640,7 +654,7 @@ void renderScene()
 		for (int x = 0; x < RES_X; x++)
 		{
 			Color color = Color();
-			
+
 
 			if (sqrt_num_samples == 0) {
 				Vector pixel;
@@ -717,7 +731,7 @@ void setupCallbacks()
 	glutIdleFunc(renderScene);
 	glutTimerFunc(0, timer, 0);
 }
-void init(int argc, char *argv[])
+void init(int argc, char* argv[])
 {
 	// set the initial camera position on its spherical coordinates
 	Eye = scene->GetCamera()->GetEye();
@@ -778,7 +792,7 @@ void init_scene(void)
 	printf("\nResolutionX = %d  ResolutionY= %d.\n", RES_X, RES_Y);
 
 	// Pixel buffer to be used in the Save Image function
-	img_Data = (uint8_t *)malloc(3 * RES_X * RES_Y * sizeof(uint8_t));
+	img_Data = (uint8_t*)malloc(3 * RES_X * RES_Y * sizeof(uint8_t));
 	if (img_Data == NULL)
 		exit(1);
 
@@ -787,7 +801,7 @@ void init_scene(void)
 	if (Accel_Struct == GRID_ACC)
 	{
 		grid_ptr = new Grid();
-		vector<Object *> objs;
+		vector<Object*> objs;
 		int num_objects = scene->getNumObjects();
 
 		for (int o = 0; o < num_objects; o++)
@@ -799,7 +813,7 @@ void init_scene(void)
 	}
 	else if (Accel_Struct == BVH_ACC)
 	{
-		vector<Object *> objs;
+		vector<Object*> objs;
 		int num_objects = scene->getNumObjects();
 		bvh_ptr = new BVH();
 
@@ -820,7 +834,7 @@ void init_scene(void)
 		printf("Distribution Ray-Tracing\n");
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	// Initialization of DevIL
 	if (ilGetInteger(IL_VERSION_NUM) < IL_VERSION)
@@ -859,10 +873,10 @@ int main(int argc, char *argv[])
 		init_scene();
 		size_vertices = 2 * RES_X * RES_Y * sizeof(float);
 		size_colors = 3 * RES_X * RES_Y * sizeof(float);
-		vertices = (float *)malloc(size_vertices);
+		vertices = (float*)malloc(size_vertices);
 		if (vertices == NULL)
 			exit(1);
-		colors = (float *)malloc(size_colors);
+		colors = (float*)malloc(size_colors);
 		if (colors == NULL)
 			exit(1);
 		memset(colors, 0, size_colors);
