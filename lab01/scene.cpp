@@ -512,12 +512,12 @@ bool Scene::load_p3f(const char *name)
 	  }
 	  else if (cmd == "f")   //Material
       {
-	    double Kd, Ks, Shine, T, ior;
+	    double Kd, Ks, Shine, T, ior, roughness;
 	    Color cd, cs;
 
-	    file >> cd >> Kd >> cs >> Ks >> Shine >> T >> ior;
+	    file >> cd >> Kd >> cs >> Ks >> Shine >> T >> ior >> roughness;
 
-	    material = new Material(cd, Kd, cs, Ks, Shine, T, ior);
+	    material = new Material(cd, Kd, cs, Ks, Shine, T, ior, roughness);
       }
 
       else if (cmd == "s")    //Sphere
@@ -699,14 +699,14 @@ void Scene::create_random_scene() {
 	this->SetAccelStruct(BVH_ACC);
 	this->SetSamplesPerPixel(0);
 	
-	camera = new Camera(Vector(-5.312192, 4.456562, 11.963158), Vector(0.0, 0.0, 0), Vector(0.0, 1.0, 0.0), 45.0, 0.01, 10000.0, 800, 600, 0, 1.5f);
+	camera = new Camera(Vector(-5.312192, 4.456562, 11.963158), Vector(0.0, 0.0, 0), Vector(0.0, 1.0, 0.0), 45.0, 0.01, 10000.0, 512, 512, 0, 1.5f);
 	this->SetCamera(camera);
 
 	this->addLight(new Light(Vector(7, 10, -5), Color(1.0, 1.0, 1.0)));
 	this->addLight(new Light(Vector(-7, 10, -5), Color(1.0, 1.0, 1.0)));
 	this->addLight(new Light(Vector(0, 10, 7), Color(1.0, 1.0, 1.0)));
 
-	material = new Material(Color(0.5, 0.5, 0.5), 1.0, Color(0.0, 0.0, 0.0), 0.0, 10, 0, 1);
+	material = new Material(Color(0.5, 0.5, 0.5), 1.0, Color(0.0, 0.0, 0.0), 0.0, 10, 0, 1, 0);
 
 
 	sphere = new Sphere(Vector(0.0, -1000, 0.0), 1000.0);
@@ -722,19 +722,19 @@ void Scene::create_random_scene() {
 
 			if ((center - Vector(4.0, 0.2, 0.0)).length() > 0.9) {
 				if (choose_mat < 0.4) {  //diffuse
-					material = new Material(Color(rand_double(), rand_double(), rand_double()), 1.0, Color(0.0, 0.0, 0.0), 0.0, 10, 0, 1);
+					material = new Material(Color(rand_double(), rand_double(), rand_double()), 1.0, Color(0.0, 0.0, 0.0), 0.0, 10, 0, 1, 0);
 					sphere = new Sphere(center, 0.2);
 					if (material) sphere->SetMaterial(material);
 					this->addObject((Object*)sphere);
 				}
 				else if (choose_mat < 0.9) {   //metal
-					material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(rand_double(0.5, 1), rand_double(0.5, 1), rand_double(0.5, 1)), 1.0, 220, 0, 1);
+					material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(rand_double(0.5, 1), rand_double(0.5, 1), rand_double(0.5, 1)), 1.0, 220, 0, 1, 0);
 					sphere = new Sphere(center, 0.2);
 					if (material) sphere->SetMaterial(material);
 					this->addObject((Object*)sphere);
 				}
 				else {   //glass 
-					material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(1.0, 1.0, 1.0), 0.7, 20, 1, 1.5);
+					material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(1.0, 1.0, 1.0), 0.7, 20, 1, 1.5, 0);
 					sphere = new Sphere(center, 0.2);
 					if (material) sphere->SetMaterial(material);
 					this->addObject((Object*)sphere);
@@ -744,17 +744,17 @@ void Scene::create_random_scene() {
 
 		}
 
-	material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(1.0, 1.0, 1.0), 0.7, 20, 1, 1.5);
+	material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(1.0, 1.0, 1.0), 0.7, 20, 1, 1.5, 0);
 	sphere = new Sphere(Vector(0.0, 1.0, 0.0), 1.0);
 	if (material) sphere->SetMaterial(material);
 	this->addObject((Object*)sphere);
 
-	material = new Material(Color(0.4, 0.2, 0.1), 0.9, Color(1.0, 1.0, 1.0), 0.1, 10, 0, 1.0);
+	material = new Material(Color(0.4, 0.2, 0.1), 0.9, Color(1.0, 1.0, 1.0), 0.1, 10, 0, 1.0, 0);
 	sphere = new Sphere(Vector(-4.0, 1.0, 0.0), 1.0);
 	if (material) sphere->SetMaterial(material);
 	this->addObject((Object*)sphere);
 
-	material = new Material(Color(0.4, 0.2, 0.1), 0.0, Color(0.7, 0.6, 0.5), 1.0, 220, 0, 1.0);
+	material = new Material(Color(0.4, 0.2, 0.1), 0.0, Color(0.7, 0.6, 0.5), 1.0, 220, 0, 1.0, 0);
 	sphere = new Sphere(Vector(4.0, 1.0, 0.0), 1.0);
 	if (material) sphere->SetMaterial(material);
 	this->addObject((Object*)sphere);

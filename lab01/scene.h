@@ -23,10 +23,10 @@ class Material
 public:
 	
 	Material() :
-		m_diffColor(Color(0.2f, 0.2f, 0.2f)), m_Diff( 0.2f ), m_specColor(Color(1.0f, 1.0f, 1.0f)), m_Spec( 0.8f ), m_Shine(20), m_Refl( 1.0f ), m_T( 0.0f ), m_RIndex( 1.0f ){};
+		m_diffColor(Color(0.2f, 0.2f, 0.2f)), m_Diff( 0.2f ), m_specColor(Color(1.0f, 1.0f, 1.0f)), m_Spec( 0.8f ), m_Shine(20), m_Refl( 1.0f ), m_T( 0.0f ), m_RIndex( 1.0f ), m_Roughness( 0.0f){};
 
-	Material (Color& c, float Kd, Color& cs, float Ks, float Shine, float T, float ior) {
-		m_diffColor = c; m_Diff = Kd; m_specColor = cs; m_Spec = Ks; m_Shine = Shine; m_Refl = Ks; m_T = T; m_RIndex = ior;
+	Material (Color& c, float Kd, Color& cs, float Ks, float Shine, float T, float ior, float roughness) {
+		m_diffColor = c; m_Diff = Kd; m_specColor = cs; m_Spec = Ks; m_Shine = Shine; m_Refl = Ks; m_T = T; m_RIndex = ior, m_Roughness = roughness;
 	}
 
 	void SetDiffColor( Color& a_Color ) { m_diffColor = a_Color; }
@@ -45,11 +45,13 @@ public:
 	float GetTransmittance() { return m_T; }
 	void SetRefrIndex( float a_ior ) { m_RIndex = a_ior; }
 	float GetRefrIndex() { return m_RIndex; }
+	float GetRoughness() { return m_Roughness; }
 private:
 	Color m_diffColor, m_specColor;
 	float m_Refl, m_T;
 	float m_Diff, m_Shine, m_Spec;
 	float m_RIndex;
+	float m_Roughness;
 };
 
 class Light

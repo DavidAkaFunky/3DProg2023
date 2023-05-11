@@ -35,7 +35,6 @@ bool P3F_scene = true; // choose between P3F scene or a built-in random scene
 #define CAPTION "Whitted Ray-Tracer"
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
-#define ROUGHNESS 0.25
 
 unsigned int FrameCount = 0;
 
@@ -462,7 +461,7 @@ void setupGLUT(int argc, char *argv[])
 /////////////////////////////////////////////////////YOUR CODE HERE///////////////////////////////////////////////////////////////////////////////////////
 
 double get_rand(double min, double max) {
-	return min + static_cast <double> (rand()) / (static_cast <double> (RAND_MAX / (max - min)));
+	return min + rand_float() * (max - min);
 }
 
 Vector rand_in_unit_sphere() {
@@ -471,6 +470,7 @@ Vector rand_in_unit_sphere() {
 	double c = sqrt(1 - pow(z, 2));
 	double x = c * cos(theta);
 	double y = c * sin(theta);
+	//printf("%f, %f, %f\n", x, y, z);
 	return Vector(x, y, z);
 }
 
@@ -479,7 +479,20 @@ Color rayTracing(Ray ray, int depth, float ior_i);
 Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point, 
 	Material* material, int depth, float ior_i, float x) {
 	// Reflection
-	Vector refl_ray_dir = (normal_vec * cos_theta_i * 2 - rev_ray_dir + rand_in_unit_sphere() * ROUGHNESS).normalize();
+	
+	float spp = max(1, scene->GetSamplesPerPixel());
+	Vector avg = Vector(0, 0, 0);
+
+	// TODO: CREATE ANTI-ALIASING-LIKE FUZZINESS
+	for (int i = 0; i < spp; i++) {
+		avg = avg + rand_in_unit_sphere();
+	}
+	avg *= (1 / spp);
+
+	Vector refl_ray_dir = (normal_vec * cos_theta_i * 2 - rev_ray_dir + avg * material->GetRoughness()).normalize();
+	
+	if (refl_ray_dir * normal_vec < 0) return material->GetSpecColor();
+	
 	Ray refl_ray(hit_point, refl_ray_dir);
 
 	Color refl_colour = rayTracing(refl_ray, depth + 1, ior_i);
@@ -490,15 +503,12 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 {
 	float hit_dist, shortest_hit_dist = std::numeric_limits<float>::max();
 	Object* shortest_hit_object = nullptr;
-	int shortest_hit_index = -1;
 
 	for (int i = 0; i < scene->getNumObjects(); i++) {
 		Object* object = scene->getObject(i);
 		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
 			shortest_hit_dist = hit_dist;
-			shortest_hit_object = object;
-			shortest_hit_index = i;
-			//cout << "TYPE IS " << typeid(*object).name() << "\n";
+			shortest_hit_object = object;	
 		}
 	}
 
@@ -513,7 +523,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Vector normal_vec = shortest_hit_object->getShadingNormal(rev_ray_dir, hit_point); // normal direction might be wrong - sphere eg. what if ray comes from inside
 
 	// To account for acne spots
-	Vector mod_hit_point = hit_point + normal_vec * EPSILON;
+	Vector reflected_hit_point = hit_point + normal_vec * EPSILON;
 	Color colour = Color();
 
 	for (int i = 0; i < scene->getNumLights(); i++)
@@ -527,7 +537,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		if (light_normal_dot_product < 0)
 			continue;
 
-		Ray shadow_ray(mod_hit_point, light_dir);
+		Ray shadow_ray(reflected_hit_point, light_dir);
 		bool in_shadow = false;
 
 		for (int j = 0; j < scene->getNumObjects(); j++)
@@ -560,11 +570,15 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	if (depth >= MAX_DEPTH || (material->GetTransmittance() == 0 && material->GetReflection() == 0))
 		return colour;
 
+	//--------------------------------------------Only Reflective-------------------------------
+
 	float cos_theta_i = normal_vec * rev_ray_dir; // Because both vectors are normalised
 
 	// TODO: Execute if has diffuse?
 	if (material->GetTransmittance() == 0)
-		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, mod_hit_point, material, depth, ior_i, shortest_hit_dist);
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, reflected_hit_point, material, depth, ior_i, shortest_hit_dist);
+
+	//-----------------------------------Dieletric (reflection + refraction)--------------------------
 
 	Vector tangent_vec = (ray.direction + normal_vec * cos_theta_i);
 	float sin_theta_i = tangent_vec.length();
@@ -575,12 +589,12 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	float sin_theta_t = sin_theta_i * ior_i / ior_t;
 	
+	//Total Reflection
 	if (sin_theta_t > 1)
-		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, mod_hit_point, material, depth, ior_i, shortest_hit_dist);
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, reflected_hit_point, material, depth, ior_i, shortest_hit_dist);
 
 	float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
 
-	//Dieletric (reflection + refraction)
 
 	//Schlick's approximation
 	float R0 = pow( (ior_i - ior_t) / (ior_i + ior_t), 2);
@@ -591,17 +605,14 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	// Reflection --> only if object isn't diffuse
 	Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
-	Ray reflected_ray(hit_point, reflected_ray_direction);
+	Ray reflected_ray(reflected_hit_point, reflected_ray_direction);
 
 	Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
 	colour += reflected_colour * Kr;
 
-	// Refraction --> only if object isn't diffuse
-	//if (sin_theta_t > 1) // In case of total internal reflection
-		//return colour;
-
+	Vector refracted_hit_point = hit_point + normal_vec * EPSILON;
 	Vector refracted_ray_direction = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
-	Ray refracted_ray(hit_point, refracted_ray_direction);
+	Ray refracted_ray(refracted_hit_point, refracted_ray_direction);
 
 	Color refracted_colour = rayTracing(refracted_ray, depth + 1, ior_t);
 	colour += refracted_colour * (1 - Kr);
@@ -616,7 +627,7 @@ void renderScene()
 	int index_pos = 0;
 	int index_col = 0;
 	unsigned int counter = 0;
-	int num_samples = scene->GetSamplesPerPixel();
+	int sqrt_num_samples = sqrt(scene->GetSamplesPerPixel());
 
 	if (drawModeEnabled)
 	{
@@ -631,7 +642,7 @@ void renderScene()
 			Color color = Color();
 			
 
-			if (num_samples == 0) {
+			if (sqrt_num_samples == 0) {
 				Vector pixel;
 				pixel.x = x + 0.5f;
 				pixel.y = y + 0.5f;
@@ -640,21 +651,21 @@ void renderScene()
 				color = rayTracing(ray, 1, 1.0).clamp();
 			}
 			else {
-				for (int p = 0; p < num_samples; p++) {
-					for (int q = 0; q < num_samples; q++) {
+				for (int p = 0; p < sqrt_num_samples; p++) {
+					for (int q = 0; q < sqrt_num_samples; q++) {
 
 						Vector sample; // viewport coordinates
 						float e = rand_float(); // TODO: necessary to set seed?
 
-						sample.x = x + (p + e) / num_samples;
-						sample.y = y + (q + e) / num_samples;
+						sample.x = x + (p + e) / sqrt_num_samples;
+						sample.y = y + (q + e) / sqrt_num_samples;
 
 						Ray ray = scene->GetCamera()->PrimaryRay(sample); // function from camera.h
 						color += rayTracing(ray, 1, 1.0);
 					}
 				}
 
-				color = color * (1 / pow(num_samples, 2));
+				color = color * (1 / pow(sqrt_num_samples, 2));
 				color = color.clamp();
 			}
 
