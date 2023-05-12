@@ -4,6 +4,8 @@
 #include <vector>
 #include <cmath>
 #include <IL/il.h>
+#include <algorithm>
+#include <random>
 using namespace std;
 
 #include "camera.h"
@@ -58,14 +60,40 @@ class Light
 {
 public:
 
-	Light( Vector& pos, int width, int height, Color& col ): position(pos), width(width), height(height), color(col) {};
+	Light( Vector& pos, int width, int height, int spl, Color& col): position(pos), width(width), height(height), spl(spl), color(col), current_sample(0)
+	{
+		proccessed_samples = std::vector<int>(spl);
+		for (int i = 0; i < spl; i++) {
+			proccessed_samples[i] = i;
+		}
+	};
 
 	float getPointIntesity() {
-		return 1.0 / (width * height);
+		return 1.0 / (spl);
+	}
+
+	Vector getRandomLightPoint() {
+		
+		if (current_sample == 0) {
+			std::shuffle(std::begin(proccessed_samples), std::end(proccessed_samples), rd);
+		}
+
+		int rand_sample_x = proccessed_samples[current_sample] % spl;
+		int rand_sample_z = proccessed_samples[current_sample] / spl;
+		current_sample = (current_sample + 1) % (spl);
+
+		float e = rand_float();
+
+		//WARNING: added random variation as in anti-aliasing jittering
+		return Vector(position.x + (rand_sample_x + e) * (width/sqrt(spl)), position.y, position.z + (rand_sample_z + e) * (height / sqrt(spl)));
 	}
 	
+	std::random_device rd;
+	std::vector<int> proccessed_samples;
+	int current_sample;
+	
 	Vector position;
-	int width, height;
+	int width, height, spl;
 	Color color;
 };
 

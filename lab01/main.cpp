@@ -577,13 +577,13 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		Vector light_dir;
 
 		if (scene->GetSamplesPerPixel() == 0) {
-			for (int w = 0; w < light->width; w++) {
-				for (int h = 0; h < light->height; h++) {
+			for (int w = 0; w < sqrt(light->spl); w++) {
+				for (int h = 0; h < sqrt(light->spl); h++) {
 
 					float e = rand_float();
 					
 					//WARNING: added random variation as in anti-aliasing jittering
-					Vector light_position = Vector(light->position.x + (w + e)/light->width, light->position.y, light->position.z + (h + e)/light->height);
+					Vector light_position = Vector(light->position.x + (w + e) * (light->width / light->spl), light->position.y, light->position.z + (h + e) * (light->height / light->spl));
 					light_dir = (light_position - hit_point).normalize();
 
 					float light_normal_dot_product = light_dir * normal_vec;
@@ -594,22 +594,22 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 					Ray shadow_ray(reflected_hit_point, light_dir);
 
 					//WARNING: added a coefficient to light color to make it less bright
-					float intensity = light->getPointIntesity() * 0.6;
-					Color light_color = light->color * light->getPointIntesity() * 0.6;
+					Color light_color = light->color * light->getPointIntesity();
 					colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light_color);
 				}
 			}
 		}
 		else {
-
-			//Should add jittering
-			Vector light_position = Vector(
+			
+			//without jittering
+			/*Vector light_position = Vector(
 				light->position.x + light->width * rand_float(), 
 				light->position.y, 
 				light->position.z + light->height * rand_float()
-			);
+			);*/
 
-			light_dir = (light_position - hit_point).normalize();
+			//with jittering
+			light_dir = (light->getRandomLightPoint() - hit_point).normalize();
 
 			float light_normal_dot_product = light_dir * normal_vec;
 
@@ -619,7 +619,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 			Ray shadow_ray(reflected_hit_point, light_dir);
 
 			//WARNING: added a coefficient to light color to make it less bright
-			colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light->color * 0.6);
+			colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light->color * 0.8);
 		}
 	}
 
