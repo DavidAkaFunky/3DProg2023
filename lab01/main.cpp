@@ -474,8 +474,6 @@ Vector rand_in_unit_sphere(int p, int q, int sqrt_num_samples) {
 	return Vector(x, y, z);
 }
 
-Color rayTracing(Ray ray, int depth, float ior_i);
-
 Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir, Vector normal_vec, Vector light_dir, Color light_color) {
 	Color colour = Color();
 	bool in_shadow = false;
@@ -508,25 +506,33 @@ Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir
 	colour += light_color * (diffuse_colour + specular_colour);
 }
 
+Color rayTracing(Ray ray, int depth, float ior_i);
+
 Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point,
 	Material* material, int depth, float ior_i, float x) {
 	// Reflection
 
 	Vector refl_ray_dir = (normal_vec * cos_theta_i * 2 - rev_ray_dir);
 	float roughness = material->GetRoughness();
-	int spp = 0; // Replace with scene->GetSamplesPerPixel();
+	int spp = scene->GetSamplesPerPixel();
 	Color colour = Color();
-	if (roughness > 0 && spp > 0) {
 
-		int sqrt_num_samples = sqrt(spp);
+	if (roughness > 0) { // Fuzzy reflections
+	
+		// Anti-aliasing already shoots multiple rays,
+		// so we only need to shoot more than one here
+		// if anti-aliasing is deactivated
+		int sqrt_num_samples = (spp == 0) ? 4 : 1;
 		Vector mod_refl_ray_dir;
 
 		for (int p = 0; p < sqrt_num_samples; p++) {
 			for (int q = 0; q < sqrt_num_samples; q++) {
 				mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere(p, q, sqrt_num_samples) * roughness).normalize();
 				
-				if (mod_refl_ray_dir * normal_vec < 0) 
+				if (mod_refl_ray_dir * normal_vec < 0) {
 					colour += material->GetSpecColor();
+					continue;
+				}
 
 				Ray refl_ray(hit_point, mod_refl_ray_dir);
 
@@ -535,7 +541,7 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 			}
 		}
 
-		return colour * (1.0 / spp);
+		return colour * (1.0 / pow(sqrt_num_samples, 2)); // Average the added colours
 	}
 
 	Ray refl_ray(hit_point, refl_ray_dir);
@@ -565,7 +571,8 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Vector hit_point = ray.origin + ray.direction * shortest_hit_dist;
 	Vector rev_ray_dir = ray.direction * (-1);
 
-	Vector normal_vec = shortest_hit_object->getShadingNormal(rev_ray_dir, hit_point); // normal direction might be wrong - sphere eg. what if ray comes from inside
+	// Negate normal vector's direction if the ray comes from inside the object
+	Vector normal_vec = shortest_hit_object->getShadingNormal(rev_ray_dir, hit_point);
 
 	// To account for acne spots
 	Vector refl_hit_point = hit_point + normal_vec * EPSILON;
@@ -658,7 +665,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	float Kr = R0 + (1 - R0) * pow(1 - cos_theta_Kr, 5);
 
 	// Reflection --> only if object isn't diffuse
-	//TODO: If necessário?
+	// TODO: Should we add jittering?
 	if (material->GetReflection() > 0) {
 		Vector refl_ray_dir = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
 		Ray reflected_ray(refl_hit_point, refl_ray_dir);
