@@ -568,7 +568,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Vector normal_vec = shortest_hit_object->getShadingNormal(rev_ray_dir, hit_point); // normal direction might be wrong - sphere eg. what if ray comes from inside
 
 	// To account for acne spots
-	Vector reflected_hit_point = hit_point + normal_vec * EPSILON;
+	Vector refl_hit_point = hit_point + normal_vec * EPSILON;
 	Color colour = Color();
 
 	for (int i = 0; i < scene->getNumLights(); i++)
@@ -591,7 +591,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 					if (light_normal_dot_product < 0)
 						continue;
 
-					Ray shadow_ray(reflected_hit_point, light_dir);
+					Ray shadow_ray(refl_hit_point, light_dir);
 
 					//WARNING: added a coefficient to light color to make it less bright
 					Color light_color = light->color * light->getPointIntesity();
@@ -616,7 +616,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 			if (light_normal_dot_product < 0)
 				continue;
 
-			Ray shadow_ray(reflected_hit_point, light_dir);
+			Ray shadow_ray(refl_hit_point, light_dir);
 
 			//WARNING: added a coefficient to light color to make it less bright
 			colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light->color * 0.8);
@@ -632,7 +632,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	// TODO: Execute if has diffuse?
 	if (material->GetTransmittance() == 0)
-		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, reflected_hit_point, material, depth, ior_i, shortest_hit_dist);
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, refl_hit_point, material, depth, ior_i, shortest_hit_dist);
 
 	//-----------------------------Dielectric (reflection + refraction)--------------------------
 
@@ -647,7 +647,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	//Total Reflection
 	if (sin_theta_t > 1)
-		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, reflected_hit_point, material, depth, ior_i, shortest_hit_dist);
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, refl_hit_point, material, depth, ior_i, shortest_hit_dist);
 
 	float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
 
@@ -660,16 +660,16 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	// Reflection --> only if object isn't diffuse
 	//TODO: If necessário?
 	if (material->GetReflection() > 0) {
-		Vector reflected_ray_direction = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
-		Ray reflected_ray(reflected_hit_point, reflected_ray_direction);
+		Vector refl_ray_dir = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
+		Ray reflected_ray(refl_hit_point, refl_ray_dir);
 
 		Color reflected_colour = rayTracing(reflected_ray, depth + 1, ior_i);
 		colour += material->GetSpecColor() * reflected_colour * Kr;
 	}
 
-	Vector refracted_hit_point = hit_point - normal_vec * EPSILON;
-	Vector refracted_ray_direction = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
-	Ray refracted_ray(refracted_hit_point, refracted_ray_direction);
+	Vector refr_hit_point = hit_point - normal_vec * EPSILON;
+	Vector refr_ray_dir = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
+	Ray refracted_ray(refr_hit_point, refr_ray_dir);
 
 	Color refracted_colour = rayTracing(refracted_ray, depth + 1, ior_t);
 	colour += refracted_colour * (1 - Kr);
@@ -685,11 +685,12 @@ void renderScene()
 	int index_col = 0;
 	unsigned int counter = 0;
 	int sqrt_num_samples = sqrt(scene->GetSamplesPerPixel());
+	Camera* camera = scene->GetCamera();
 
 	if (drawModeEnabled)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
-		scene->GetCamera()->SetEye(Vector(camX, camY, camZ)); // Camera motion
+		camera->SetEye(Vector(camX, camY, camZ)); // Camera motion
 	}
 
 	for (int y = 0; y < RES_Y; y++)
@@ -698,13 +699,12 @@ void renderScene()
 		{
 			Color color = Color();
 
-
 			if (sqrt_num_samples == 0) {
 				Vector pixel;
 				pixel.x = x + 0.5f;
 				pixel.y = y + 0.5f;
 
-				Ray ray = scene->GetCamera()->PrimaryRay(pixel); // function from camera.h
+				Ray ray = camera->PrimaryRay(pixel); // function from camera.h
 				color = rayTracing(ray, 1, 1.0).clamp();
 			}
 			else {
@@ -717,7 +717,7 @@ void renderScene()
 						sample.x = x + (p + e) / sqrt_num_samples;
 						sample.y = y + (q + e) / sqrt_num_samples;
 
-						Ray ray = scene->GetCamera()->PrimaryRay(sample); // function from camera.h
+						Ray ray = camera->PrimaryRay(sample); // function from camera.h
 						color += rayTracing(ray, 1, 1.0);
 					}
 				}
