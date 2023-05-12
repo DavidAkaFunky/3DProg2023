@@ -465,13 +465,19 @@ double get_rand(double min, double max) {
 }
 
 Vector rand_in_unit_sphere(int p, int q, int sqrt_num_samples) {
-	double theta = get_rand(2 * PI * p / sqrt_num_samples, 2 * PI * (p+1) / sqrt_num_samples);
-	double z = get_rand(-1 + 2 * q / sqrt_num_samples, -1 + 2 * (q+1) / sqrt_num_samples);
+	double theta = get_rand(2.0 * PI * p / sqrt_num_samples, 2.0 * PI * (p + 1) / sqrt_num_samples);
+	double z = get_rand(-1.0 + 2.0 * q / sqrt_num_samples, -1.0 + 2.0 * (q + 1) / sqrt_num_samples);
 	double c = sqrt(1 - pow(z, 2));
 	double x = c * cos(theta);
 	double y = c * sin(theta);
-	//printf("%f, %f, %f\n", x, y, z);
 	return Vector(x, y, z);
+}
+
+Vector rand_in_unit_circle() {
+	double theta = get_rand(0, 2 * PI);
+	double x = cos(theta);
+	double y = sin(theta);
+	return Vector(x, y, 0);
 }
 
 Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir, Vector normal_vec, Vector light_dir, Color light_color) {
@@ -686,6 +692,18 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 // Render function by primary ray casting from the eye towards the scene's objects
 
+Ray getPrimaryRay(Camera* camera, Vector& pixel_sample) {
+	float aperture = camera->GetAperture();
+	Ray r1 = camera->PrimaryRay(rand_in_unit_circle() * aperture, pixel_sample);
+	Ray r2 = camera->PrimaryRay(pixel_sample);
+	printf("RAY 1: %f %f %f %f %f %f\n", r1.origin.x, r1.origin.y, r1.origin.z, r1.direction.x, r1.direction.y, r1.direction.z);
+	printf("RAY 2: %f %f %f %f %f %f\n", r2.origin, r2.origin.y, r2.origin.z, r2.direction.x, r2.direction.y, r2.direction.z);
+	return (aperture > 0) ? r1 : r2;
+	//return (aperture > 0) ?
+	//	camera->PrimaryRay(rand_in_unit_circle() * aperture, pixel_sample) :
+	//	camera->PrimaryRay(pixel_sample);
+}
+
 void renderScene()
 {
 	int index_pos = 0;
@@ -711,7 +729,7 @@ void renderScene()
 				pixel.x = x + 0.5f;
 				pixel.y = y + 0.5f;
 
-				Ray ray = camera->PrimaryRay(pixel); // function from camera.h
+				Ray ray = getPrimaryRay(camera, pixel); // function from camera.h
 				color = rayTracing(ray, 1, 1.0).clamp();
 			}
 			else {
@@ -724,7 +742,7 @@ void renderScene()
 						sample.x = x + (p + e) / sqrt_num_samples;
 						sample.y = y + (q + e) / sqrt_num_samples;
 
-						Ray ray = camera->PrimaryRay(sample); // function from camera.h
+						Ray ray = getPrimaryRay(camera, sample);
 						color += rayTracing(ray, 1, 1.0);
 					}
 				}
