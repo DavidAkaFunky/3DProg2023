@@ -609,10 +609,11 @@ bool Scene::load_p3f(const char *name)
       {
 	    Vector pos;
         Color color;
+		int width, height;
 
-	    file >> pos >> color;
+	    file >> pos >> width >> height >> color;
 	    
-	      this->addLight(new Light(pos, color));
+	      this->addLight(new Light(pos, width, height, color));
 	    
       }
       else if (cmd == "v")
@@ -702,9 +703,9 @@ void Scene::create_random_scene() {
 	camera = new Camera(Vector(-5.312192, 4.456562, 11.963158), Vector(0.0, 0.0, 0), Vector(0.0, 1.0, 0.0), 45.0, 0.01, 10000.0, 512, 512, 0, 1.5f);
 	this->SetCamera(camera);
 
-	this->addLight(new Light(Vector(7, 10, -5), Color(1.0, 1.0, 1.0)));
-	this->addLight(new Light(Vector(-7, 10, -5), Color(1.0, 1.0, 1.0)));
-	this->addLight(new Light(Vector(0, 10, 7), Color(1.0, 1.0, 1.0)));
+	this->addLight(new Light(Vector(7, 10, -5), 4, 4, Color(1.0, 1.0, 1.0)));
+	this->addLight(new Light(Vector(-7, 10, -5), 4, 4, Color(1.0, 1.0, 1.0)));
+	this->addLight(new Light(Vector(0, 10, 7), 4, 4, Color(1.0, 1.0, 1.0)));
 
 	material = new Material(Color(0.5, 0.5, 0.5), 1.0, Color(0.0, 0.0, 0.0), 0.0, 10, 0, 1, 0);
 

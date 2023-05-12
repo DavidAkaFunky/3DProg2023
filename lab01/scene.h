@@ -58,9 +58,14 @@ class Light
 {
 public:
 
-	Light( Vector& pos, Color& col ): position(pos), color(col) {};
+	Light( Vector& pos, int width, int height, Color& col ): position(pos), width(width), height(height), color(col) {};
+
+	float getPointIntesity() {
+		return 1.0 / (width * height);
+	}
 	
 	Vector position;
+	int width, height;
 	Color color;
 };
 
