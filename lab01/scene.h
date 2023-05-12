@@ -78,8 +78,8 @@ public:
 			std::shuffle(std::begin(proccessed_samples), std::end(proccessed_samples), rd);
 		}
 
-		int rand_sample_x = proccessed_samples[current_sample] % spl;
-		int rand_sample_z = proccessed_samples[current_sample] / spl;
+		int rand_sample_x = proccessed_samples[current_sample] % (int) sqrt(spl);
+		int rand_sample_z = proccessed_samples[current_sample] / (int) sqrt(spl);
 		current_sample = (current_sample + 1) % (spl);
 
 		float e = rand_float();

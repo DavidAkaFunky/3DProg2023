@@ -596,7 +596,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 					float e = rand_float();
 					
 					//WARNING: added random variation as in anti-aliasing jittering
-					Vector light_position = Vector(light->position.x + (w + e) * (light->width / light->spl), light->position.y, light->position.z + (h + e) * (light->height / light->spl));
+					Vector light_position = Vector(light->position.x + (w + e) * (light->width / sqrt(light->spl)), light->position.y, light->position.z + (h + e) * (light->height / sqrt(light->spl)));
 					light_dir = (light_position - hit_point).normalize();
 
 					float light_normal_dot_product = light_dir * normal_vec;
@@ -607,7 +607,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 					Ray shadow_ray(refl_hit_point, light_dir);
 
 					//WARNING: added a coefficient to light color to make it less bright
-					Color light_color = light->color * light->getPointIntesity();
+					Color light_color = light->color * light->getPointIntesity() * 0.4;
 					colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light_color);
 				}
 			}
@@ -632,7 +632,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 			Ray shadow_ray(refl_hit_point, light_dir);
 
 			//WARNING: added a coefficient to light color to make it less bright
-			colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light->color * 0.8);
+			colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light->color * 0.6);
 		}
 	}
 
@@ -696,12 +696,9 @@ Ray getPrimaryRay(Camera* camera, Vector& pixel_sample) {
 	float aperture = camera->GetAperture();
 	Ray r1 = camera->PrimaryRay(rand_in_unit_circle() * aperture, pixel_sample);
 	Ray r2 = camera->PrimaryRay(pixel_sample);
-	printf("RAY 1: %f %f %f %f %f %f\n", r1.origin.x, r1.origin.y, r1.origin.z, r1.direction.x, r1.direction.y, r1.direction.z);
-	printf("RAY 2: %f %f %f %f %f %f\n", r2.origin, r2.origin.y, r2.origin.z, r2.direction.x, r2.direction.y, r2.direction.z);
+	//printf("RAY 1: %f %f %f %f %f %f\n", r1.origin.x, r1.origin.y, r1.origin.z, r1.direction.x, r1.direction.y, r1.direction.z);
+	//printf("RAY 2: %f %f %f %f %f %f\n", r2.origin, r2.origin.y, r2.origin.z, r2.direction.x, r2.direction.y, r2.direction.z);
 	return (aperture > 0) ? r1 : r2;
-	//return (aperture > 0) ?
-	//	camera->PrimaryRay(rand_in_unit_circle() * aperture, pixel_sample) :
-	//	camera->PrimaryRay(pixel_sample);
 }
 
 void renderScene()
