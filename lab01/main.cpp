@@ -566,21 +566,29 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 {
 	float hit_dist, shortest_hit_dist = std::numeric_limits<float>::max();
 	Object* shortest_hit_object = nullptr;
+	Vector hit_point;
 
-	for (int i = 0; i < scene->getNumObjects(); i++) {
-		Object* object = scene->getObject(i);
-		if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
-			shortest_hit_dist = hit_dist;
-			shortest_hit_object = object;
-		}
+	if (Accel_Struct == GRID_ACC) {
+		grid_ptr->Traverse(ray, &shortest_hit_object, hit_point);
 	}
+	else {
+		for (int i = 0; i < scene->getNumObjects(); i++) {
+			Object* object = scene->getObject(i);
+			if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
+				shortest_hit_dist = hit_dist;
+				shortest_hit_object = object;
+			}
+		}
+		hit_point = ray.origin + ray.direction * shortest_hit_dist;
+	}
+
+	
 
 	if (shortest_hit_object == nullptr)
 		return scene->GetBackgroundColor();
 
 	Material* material = shortest_hit_object->GetMaterial();
 
-	Vector hit_point = ray.origin + ray.direction * shortest_hit_dist;
 	Vector rev_ray_dir = ray.direction * (-1);
 
 	// Negate normal vector's direction if the ray comes from inside the object
@@ -743,7 +751,7 @@ void renderScene()
 
 					Ray ray = camera->PrimaryRay(pixel_sample); // function from camera.h
 					color = rayTracing(ray, 1, 1.0);
-					printf("FINAL: %f, %f, %f\n", color.r(), color.g(), color.b());
+					//printf("FINAL: %f, %f, %f\n", color.r(), color.g(), color.b());
 					color = color.clamp();
 				}
 				else { // Anti-aliasing => Average each ray's colour
