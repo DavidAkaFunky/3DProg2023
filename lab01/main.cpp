@@ -77,7 +77,7 @@ Scene* scene = NULL;
 
 Grid* grid_ptr = NULL;
 BVH* bvh_ptr = NULL;
-accelerator Accel_Struct = NONE;
+accelerator Accel_Struct = GRID_ACC;
 
 int RES_X, RES_Y;
 
@@ -486,14 +486,19 @@ Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir
 	bool in_shadow = false;
 	float hit_dist;
 
-	for (int j = 0; j < scene->getNumObjects(); j++)
-	{
-		if (scene->getObject(j)->intercepts(shadow_ray, hit_dist))
-		{
-			in_shadow = true;
-			break;
+	if (Accel_Struct == GRID_ACC) {
+		in_shadow = grid_ptr->Traverse(shadow_ray);
+	}
+
+	else {
+		for (int j = 0; j < scene->getNumObjects(); j++) {
+			if (scene->getObject(j)->intercepts(shadow_ray, hit_dist)) {
+				in_shadow = true;
+				break;
+			}
 		}
 	}
+	
 
 	if (in_shadow)
 		return colour;
@@ -569,6 +574,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Vector hit_point;
 
 	if (Accel_Struct == GRID_ACC) {
+		//traverse the grid
 		grid_ptr->Traverse(ray, &shortest_hit_object, hit_point);
 	}
 	else {
