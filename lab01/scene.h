@@ -68,7 +68,7 @@ public:
 		}
 	};
 
-	float getPointIntesity() {
+	float getPointIntensity() {
 		return 1.0 / (spl);
 	}
 

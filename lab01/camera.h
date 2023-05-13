@@ -56,7 +56,7 @@ public:
 		aperture = Aperture_ratio * (w / res_x); //Lens aperture = aperture_ratio * pixel_size
 
 		printf("\nwidth=%f height=%f fov=%f, viewplane distance=%f, pixel size=%.3f\n", w,h, fovy,plane_dist, w/res_x);
-		if (Aperture_ratio != 0) printf("\nDepth-Of-Field effect enabled with a lens aperture = %.1f, focal_ratio = %.1f\n", Aperture_ratio, focal_ratio);
+		if (Aperture_ratio != 0) printf("\nDepth-Of-Field effect enabled with a lens aperture = %.1f, focal ratio = %.1f\n", Aperture_ratio, focal_ratio);
     }
 
 	void SetEye(Vector from) {
@@ -85,8 +85,10 @@ public:
 	Ray PrimaryRay(const Vector& lens_sample, const Vector& pixel_sample) // DOF: Rays cast from a thin lens sample to a pixel sample
 	{
 		Vector focal_plane_sample = (Vector) pixel_sample * focal_ratio;
+		//Vector eye_offset = eye + lens_sample;
 		Vector eye_offset = eye + u * lens_sample.x + v * lens_sample.y;
-		Vector ray_dir = (focal_plane_sample - (Vector) lens_sample).normalize();
+		Vector ray_dir_env = (focal_plane_sample - (Vector)lens_sample).normalize();
+		Vector ray_dir = (u * ray_dir_env.x + v * ray_dir_env.y + n * ray_dir_env.z).normalize();
 		return Ray(eye_offset, ray_dir);
 	}
 };
