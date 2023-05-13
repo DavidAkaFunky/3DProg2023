@@ -87,8 +87,8 @@ public:
 		Vector focal_plane_sample = (Vector) pixel_sample * focal_ratio;
 		//Vector eye_offset = eye + lens_sample;
 		Vector eye_offset = eye + u * lens_sample.x + v * lens_sample.y;
-		Vector ray_dir_env = (focal_plane_sample - (Vector)lens_sample).normalize();
-		Vector ray_dir = (u * ray_dir_env.x + v * ray_dir_env.y + n * ray_dir_env.z).normalize();
+		Vector ray_dir = (focal_plane_sample - (Vector)lens_sample).normalize();
+		//Vector ray_dir = (u * ray_dir_env.x + v * ray_dir_env.y + n * ray_dir_env.z).normalize();
 		return Ray(eye_offset, ray_dir);
 	}
 };
