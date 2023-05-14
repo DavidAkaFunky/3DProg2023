@@ -602,7 +602,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Vector refl_hit_point = hit_point + normal_vec * EPSILON;
 	Color colour = Color();
 
-	int sqrt_spl;
+	float sqrt_spl;
 
 	for (int i = 0; i < scene->getNumLights(); i++)
 	{
@@ -729,7 +729,7 @@ void renderScene()
 	int index_pos = 0;
 	int index_col = 0;
 	unsigned int counter = 0;
-	int sqrt_spp = sqrt(scene->GetSamplesPerPixel());
+	float sqrt_spp = sqrt(scene->GetSamplesPerPixel());
 	Camera* camera = scene->GetCamera();
 
 	if (drawModeEnabled)
