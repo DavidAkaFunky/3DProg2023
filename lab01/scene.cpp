@@ -201,16 +201,13 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	double a = 1.0 / ray.direction.x;
 
 	if (a >= 0) {
-		//printf("CASE 2, a: %f, ray.direction.x = %f ", a, ray.direction.x);
 		tx_min = (min.x - ray.origin.x) * a;
 		tx_max = (max.x - ray.origin.x) * a;
 	}
 	else {
-		//printf("CASE 3, a: %f, ray.direction.x = %f ", a, ray.direction.x);
 		tx_min = (max.x - ray.origin.x) * a;
 		tx_max = (min.x - ray.origin.x) * a;
 	}
-	//printf("tx_min = %f, tx_max = %f\n", tx_min, tx_max);
 
 	double b = 1.0 / ray.direction.y;
 	if (b >= 0) {
@@ -221,7 +218,6 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		ty_min = (max.y - ray.origin.y) * b;
 		ty_max = (min.y - ray.origin.y) * b;
 	}
-	//printf("ty_min = %f, ty_max = %f\n", ty_min, ty_max);
 
 	double c = 1.0 / ray.direction.z;
 	if (c >= 0) {
@@ -232,7 +228,6 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tz_min = (max.z - ray.origin.z) * c;
 		tz_max = (min.z - ray.origin.z) * c;
 	}
-	//printf("tz_min = %f, tz_max = %f\n", tz_min, tz_max);
 
 
 	float tE, tL; //entering and leaving t values 
@@ -279,10 +274,10 @@ bool aaBox::intercepts(Ray& ray, float& t)
 			t = tL; // ray hits inside surface
 			Normal = face_out;
 		}
-		//printf("t = %f, normal is %f, %f, %f\n", t, Normal.x, Normal.y, Normal.z);
+
 		return true;
 	}
-	//printf("RETURNED FALSE\n");
+
 	return false;
 }
 

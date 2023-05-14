@@ -525,7 +525,7 @@ Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir
 Color rayTracing(Ray ray, int depth, float ior_i);
 
 Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Vector hit_point,
-	Material* material, int depth, float ior_i, float x) {
+	Material* material, int depth, float ior_i) {
 
 	Vector refl_ray_dir = (normal_vec * cos_theta_i * 2 - rev_ray_dir);
 	float roughness = material->GetRoughness();
@@ -537,7 +537,7 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 		// Anti-aliasing already shoots multiple rays,
 		// so we only need to shoot more than one here
 		// if anti-aliasing is deactivated
-		int sqrt_num_samples = (spp == 0) ? 4 : 1;
+		int sqrt_num_samples = (spp == 0) ? 2 : 1;
 		Vector mod_refl_ray_dir;
 
 		for (int p = 0; p < sqrt_num_samples; p++) {
@@ -588,8 +588,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		hit_point = ray.origin + ray.direction * shortest_hit_dist;
 	}
 
-	
-
 	if (shortest_hit_object == nullptr)
 		return scene->GetBackgroundColor();
 
@@ -618,7 +616,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 					float e = rand_float();
 					
 					//WARNING: added random variation as in anti-aliasing jittering
-					Vector light_position = Vector(light->position.x + (w + e) * (light->width / sqrt(light->spl)), light->position.y, light->position.z + (h + e) * (light->height / sqrt(light->spl)));
+					Vector light_position = Vector(light->position.x + (w + e) * (light->width / sqrt_spl), light->position.y, light->position.z + (h + e) * (light->height / sqrt_spl));
 					light_dir = (light_position - hit_point).normalize();
 
 					float light_normal_dot_product = light_dir * normal_vec;
@@ -668,7 +666,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	// TODO: Execute if has diffuse?
 	if (material->GetTransmittance() == 0)
-		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, refl_hit_point, material, depth, ior_i, shortest_hit_dist);
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, refl_hit_point, material, depth, ior_i);
 
 	//-----------------------------Dielectric (reflection + refraction)--------------------------
 
@@ -683,7 +681,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	//Total Reflection
 	if (sin_theta_t > 1)
-		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, refl_hit_point, material, depth, ior_i, shortest_hit_dist);
+		return colour + getReflection(normal_vec, cos_theta_i, rev_ray_dir, refl_hit_point, material, depth, ior_i);
 
 	float cos_theta_t = sqrt(1 - pow(sin_theta_t, 2));
 
@@ -758,7 +756,6 @@ void renderScene()
 					Ray ray = camera->PrimaryRay(pixel_sample); // function from camera.h
 					color = rayTracing(ray, 1, 1.0);
 					//printf("FINAL: %f, %f, %f\n", color.r(), color.g(), color.b());
-					color = color.clamp();
 				}
 				else { // Anti-aliasing => Average each ray's colour
 					for (int p = 0; p < sqrt_spp; p++) {
@@ -773,7 +770,6 @@ void renderScene()
 					}
 
 					color = color * (1 / pow(sqrt_spp, 2));
-					color = color.clamp();
 				}
 			}
 			else { // Add depth of field
@@ -789,9 +785,9 @@ void renderScene()
 				// Average each ray's colour
 				for (int p = 0; p < sqrt_spp_dof; p++) {
 					for (int q = 0; q < sqrt_spp_dof; q++) {
-						lens_sample = rand_in_unit_circle(p, sqrt_spp_dof) * aperture;
-						lens_sample.x /= camera->GetResX();
-						lens_sample.y /= camera->GetResY();
+						lens_sample = rand_in_unit_circle(p * sqrt_spp_dof + q, sqrt_spp_dof) * aperture;
+						lens_sample.x /= RES_X;
+						lens_sample.y /= RES_Y;
 						if (sqrt_spp != 0) { // Anti-aliasing => Each pixel sample is different
 							pixel_sample.x = x + get_rand(p, p + 1) / sqrt_spp_dof;
 							pixel_sample.y = y + get_rand(q, q + 1) / sqrt_spp_dof;
@@ -805,8 +801,8 @@ void renderScene()
 				}
 
 				color = color * (1 / pow(sqrt_spp_dof, 2));
-				color = color.clamp();
 			}
+			color = color.clamp();
 			
 			img_Data[counter++] = u8fromfloat((float)color.r());
 			img_Data[counter++] = u8fromfloat((float)color.g());
