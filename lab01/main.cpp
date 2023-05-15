@@ -461,23 +461,38 @@ void setupGLUT(int argc, char* argv[])
 
 /////////////////////////////////////////////////////YOUR CODE HERE///////////////////////////////////////////////////////////////////////////////////////
 
-double get_rand(double min, double max) {
+float get_rand(float min, float max) {
 	return min + rand_float() * (max - min);
 }
 
 Vector rand_in_unit_sphere(int p, int q, int sqrt_num_samples) {
-	double theta = get_rand(2.0 * PI * p / sqrt_num_samples, 2.0 * PI * (p + 1) / sqrt_num_samples);
+	/*double theta = get_rand(2.0 * PI * p / sqrt_num_samples, 2.0 * PI * (p + 1) / sqrt_num_samples);
 	double z = get_rand(-1.0 + 2.0 * q / sqrt_num_samples, -1.0 + 2.0 * (q + 1) / sqrt_num_samples);
 	double c = sqrt(1 - pow(z, 2));
 	double x = c * cos(theta);
-	double y = c * sin(theta);
+	double y = c * sin(theta);*/
+
+	float theta = rand_float() * 2.0 * PI;
+	float phi = rand_float() * 2.0 * PI;
+	float r = rand_float();
+
+	float x = r * sin(theta) * cos(phi);
+	float y = r * sin(theta) * sin(phi);
+	float z = r * cos(theta);
+
 	return Vector(x, y, z);
 }
 
 Vector rand_in_unit_circle(int p, int sqrt_num_samples) {
-	double theta = get_rand(2.0 * PI * p / sqrt_num_samples, 2.0 * PI * (p + 1) / sqrt_num_samples);
+	/*double theta = get_rand(2.0 * PI * p / sqrt_num_samples, 2.0 * PI * (p + 1) / sqrt_num_samples);
 	double x = cos(theta);
-	double y = sin(theta);
+	double y = sin(theta);*/
+
+	float theta = rand_float() * 2.0 * PI;
+	float r = rand_float();
+	float x = r * cos(theta);
+	float y = r * sin(theta);
+
 	return Vector(x, y, 0);
 }
 
@@ -782,21 +797,24 @@ void renderScene()
 				else {
 					sqrt_spp_dof = sqrt_spp;
 				}
+
 				// Average each ray's colour
 				for (int p = 0; p < sqrt_spp_dof; p++) {
 					for (int q = 0; q < sqrt_spp_dof; q++) {
 						lens_sample = rand_in_unit_circle(p * sqrt_spp_dof + q, sqrt_spp_dof) * aperture;
-						lens_sample.x /= RES_X;
-						lens_sample.y /= RES_Y;
+						
 						if (sqrt_spp != 0) { // Anti-aliasing => Each pixel sample is different
 							pixel_sample.x = x + get_rand(p, p + 1) / sqrt_spp_dof;
-							pixel_sample.y = y + get_rand(q, q + 1) / sqrt_spp_dof;
+							pixel_sample.y = y + get_rand(p, p + 1) / sqrt_spp_dof;
+							
 						}
+
+						//printf("%f, %f, %f \n", pixel_sample.x, pixel_sample.y, pixel_sample.z);
 						Ray ray = camera->PrimaryRay(lens_sample, pixel_sample);
 						Color a = rayTracing(ray, 1, 1.0);
-						printf("%f, %f, %f ///// ", a.r(), a.g(), a.b());
+						//printf("%f, %f, %f ///// ", a.r(), a.g(), a.b());
 						color += a;
-						printf("%f, %f, %f\n", color.r(), color.g(), color.b());
+						//printf("%f, %f, %f\n", color.r(), color.g(), color.b());
 					}
 				}
 
