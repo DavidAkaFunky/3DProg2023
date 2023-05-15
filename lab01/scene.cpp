@@ -616,7 +616,8 @@ bool Scene::load_p3f(const char *name)
 
 	    file >> pos >> width >> height >> spl >> color;
 
-		if (this->GetSamplesPerPixel() != 0) {
+		//if spl is set to 0 then no soft shadows
+		if (this->GetSamplesPerPixel() != 0 && spl != 0) {
 			spl = this->GetSamplesPerPixel();
 		}
 	    
@@ -704,15 +705,15 @@ void Scene::create_random_scene() {
 	this->SetBackgroundColor(Color(0.5, 0.7, 1.0));
 	//this->LoadSkybox("skybox");
 	//this->SetSkyBoxFlg(true);
-	this->SetAccelStruct(BVH_ACC);
+	this->SetAccelStruct(GRID_ACC);
 	this->SetSamplesPerPixel(0);
 	
 	camera = new Camera(Vector(-5.312192, 4.456562, 11.963158), Vector(0.0, 0.0, 0), Vector(0.0, 1.0, 0.0), 45.0, 0.01, 10000.0, 512, 512, 0, 1.5f);
 	this->SetCamera(camera);
 
-	this->addLight(new Light(Vector(7, 10, -5), 4, 4, 16, Color(1.0, 1.0, 1.0)));
-	this->addLight(new Light(Vector(-7, 10, -5), 4, 4, 16, Color(1.0, 1.0, 1.0)));
-	this->addLight(new Light(Vector(0, 10, 7), 4, 4, 16, Color(1.0, 1.0, 1.0)));
+	this->addLight(new Light(Vector(7, 10, -5), 1, 1, 1, Color(1.0, 1.0, 1.0)));
+	this->addLight(new Light(Vector(-7, 10, -5), 1, 1, 1, Color(1.0, 1.0, 1.0)));
+	this->addLight(new Light(Vector(0, 10, 7), 1, 1, 1, Color(1.0, 1.0, 1.0)));
 
 	material = new Material(Color(0.5, 0.5, 0.5), 1.0, Color(0.0, 0.0, 0.0), 0.0, 10, 0, 1, 0);
 

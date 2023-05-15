@@ -1,7 +1,7 @@
 #no acceleration data structure
 accel 0
 #number of random samples
-spp 32
+spp 16
 #blueish background color
 bclr 0.078 0.361 0.753
 env skybox
@@ -14,9 +14,9 @@ hither 0.01
 resolution 512 512
 aperture 0
 focal 1
-l 4 3 2 1 1 32 1 1 1
-l 1 -4 4 1 1 32 1 1 1
-l -3 1 5 1 1 32 1 1 1
+l 4 3 2 1 1 0 1 1 1
+l 1 -4 4 1 1 0 1 1 1
+l -3 1 5 1 1 0 1 1 1
 f 1 0.75 0.33 1 1 1 0.8 0 10 0 1 0
 pl 12 12 -0.5 -12 12 -0.5 -12 -12 -0.5
 f 1 0.9 0.7 0.5 1 1 1 0.5 30.0827 0 1 0.3

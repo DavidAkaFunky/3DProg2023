@@ -29,7 +29,7 @@ bool drawModeEnabled = false; // Enable OpenGL drawing.
 
 bool P3F_scene = true; // choose between P3F scene or a built-in random scene
 
-bool jittering = true; // Enable jittering
+//bool jittering = true; // Enable jittering
 
 #define MAX_DEPTH 4 // number of bounces
 
@@ -459,18 +459,11 @@ void setupGLUT(int argc, char* argv[])
 	}
 }
 
-/////////////////////////////////////////////////////YOUR CODE HERE///////////////////////////////////////////////////////////////////////////////////////
-
 float get_rand(float min, float max) {
 	return min + rand_float() * (max - min);
 }
 
-Vector rand_in_unit_sphere(int p, int q, int sqrt_num_samples) {
-	/*double theta = get_rand(2.0 * PI * p / sqrt_num_samples, 2.0 * PI * (p + 1) / sqrt_num_samples);
-	double z = get_rand(-1.0 + 2.0 * q / sqrt_num_samples, -1.0 + 2.0 * (q + 1) / sqrt_num_samples);
-	double c = sqrt(1 - pow(z, 2));
-	double x = c * cos(theta);
-	double y = c * sin(theta);*/
+Vector rand_in_unit_sphere() {
 
 	float theta = rand_float() * 2.0 * PI;
 	float phi = rand_float() * 2.0 * PI;
@@ -483,10 +476,7 @@ Vector rand_in_unit_sphere(int p, int q, int sqrt_num_samples) {
 	return Vector(x, y, z);
 }
 
-Vector rand_in_unit_circle(int p, int sqrt_num_samples) {
-	/*double theta = get_rand(2.0 * PI * p / sqrt_num_samples, 2.0 * PI * (p + 1) / sqrt_num_samples);
-	double x = cos(theta);
-	double y = sin(theta);*/
+Vector rand_in_unit_circle() {
 
 	float theta = rand_float() * 2.0 * PI;
 	float r = rand_float();
@@ -520,18 +510,12 @@ Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir
 
 	Color diffuse_colour = material->GetDiffColor() * material->GetDiffuse() * (light_dir * normal_vec);
 
-	//printf("Diffuse ");
-	//printf("%f %f %f\n", diffuse_colour.r(), diffuse_colour.g(), diffuse_colour.b());
-
 	// Halfway vector approximation
 	Vector halfway_vec = (light_dir + hit_ray_dir).normalize();
 
 	float halfway_product = halfway_vec * normal_vec;
-	//TODO: this is always zero, is it supposed to be?
-	Color specular_colour = material->GetSpecColor() * material->GetSpecular() * pow(halfway_product, material->GetShine());
 
-	//printf("Specular");
-	//printf("%f %f %f\n", specular_colour.r(), specular_colour.g(), specular_colour.b());
+	Color specular_colour = material->GetSpecColor() * material->GetSpecular() * pow(halfway_product, material->GetShine());
 
 	colour += light_colour * (diffuse_colour + specular_colour);
 	return colour;
@@ -557,7 +541,8 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 
 		for (int p = 0; p < sqrt_num_samples; p++) {
 			for (int q = 0; q < sqrt_num_samples; q++) {
-				mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere(p, q, sqrt_num_samples) * roughness).normalize();
+				//mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
+				mod_refl_ray_dir = (refl_ray_dir + rnd_unit_sphere() * roughness).normalize();
 				
 				if (mod_refl_ray_dir * normal_vec < 0) {
 					colour += material->GetSpecColor();
@@ -584,27 +569,43 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 
 Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medium 1 where the ray is travelling
 {
+	Color colour = Color();
 	float hit_dist, shortest_hit_dist = std::numeric_limits<float>::max();
 	Object* shortest_hit_object = nullptr;
 	Vector hit_point;
+	bool skybox_flg = scene->GetSkyBoxFlg();
+	bool Accel_Struct = scene->GetAccelStruct();
+	bool hit = false;
 
-	if (Accel_Struct == GRID_ACC) {
-		//traverse the grid
-		grid_ptr->Traverse(ray, &shortest_hit_object, hit_point);
-	}
-	else {
+	if (Accel_Struct == NONE) { //no acceleration; your code here}
+	
 		for (int i = 0; i < scene->getNumObjects(); i++) {
-			Object* object = scene->getObject(i);
+			Object* object = scene->getObject(i); 
 			if (object->intercepts(ray, hit_dist) && hit_dist < shortest_hit_dist) {
+				hit = true;
 				shortest_hit_dist = hit_dist;
 				shortest_hit_object = object;
 			}
 		}
+
 		hit_point = ray.origin + ray.direction * shortest_hit_dist;
 	}
+	else if (Accel_Struct == GRID_ACC) { // regular Grid
+		hit = grid_ptr->Traverse(ray, &shortest_hit_object, hit_point);
 
-	if (shortest_hit_object == nullptr)
-		return scene->GetBackgroundColor();
+	}
+	else if (Accel_Struct == BVH_ACC) { //BVH
+		hit = bvh_ptr->Traverse(ray, &shortest_hit_object, hit_point);
+	}
+
+	if (!hit) {
+		if (skybox_flg)
+			colour = scene->GetSkyboxColor(ray);
+		else
+			colour = scene->GetBackgroundColor(); //TODO: what is this? -> * bck_att);
+		return colour;
+	}
+		
 
 	Material* material = shortest_hit_object->GetMaterial();
 
@@ -615,7 +616,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 	// To account for acne spots
 	Vector refl_hit_point = hit_point + normal_vec * EPSILON;
-	Color colour = Color();
+	
 
 	float sqrt_spl;
 
@@ -624,40 +625,53 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		Light* light = scene->getLight(i);
 		Vector light_dir;
 		sqrt_spl = sqrt(light->spl);
+		
 		if (scene->GetSamplesPerPixel() == 0) {
-			for (int w = 0; w < sqrt_spl; w++) {
-				for (int h = 0; h < light->spl / sqrt_spl; h++) {
 
-					float e = rand_float();
-					
-					//WARNING: added random variation as in anti-aliasing jittering
-					Vector light_position = Vector(light->position.x + (w + e) * (light->width / sqrt_spl), light->position.y, light->position.z + (h + e) * (light->height / sqrt_spl));
-					light_dir = (light_position - hit_point).normalize();
+			if (light->spl == 0) {
 
-					float light_normal_dot_product = light_dir * normal_vec;
+				light_dir = (light->position - hit_point).normalize();
 
-					if (light_normal_dot_product < 0)
-						continue;
+				float light_normal_dot_product = light_dir * normal_vec;
 
-					Ray shadow_ray(refl_hit_point, light_dir);
+				if (light_normal_dot_product < 0)
+					continue;
 
-					//WARNING: added a coefficient to light color to make it less bright
-					Color light_color = light->color * light->getPointIntensity() * 0.4;
-					colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light_color);
+				Ray shadow_ray(refl_hit_point, light_dir);
+
+				//WARNING: added a coefficient to light color to make it less bright
+				colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light->color * 0.6);
+
+			} else {
+				for (int w = 0; w < sqrt_spl; w++) {
+					for (int h = 0; h < light->spl / sqrt_spl; h++) {
+
+						float e = rand_float();
+
+						//WARNING: added random variation as in anti-aliasing jittering
+						Vector light_position = Vector(light->position.x + (w + e) * (light->width / sqrt_spl), light->position.y, light->position.z + (h + e) * (light->height / sqrt_spl));
+						light_dir = (light_position - hit_point).normalize();
+
+						float light_normal_dot_product = light_dir * normal_vec;
+
+						if (light_normal_dot_product < 0)
+							continue;
+
+						Ray shadow_ray(refl_hit_point, light_dir);
+
+						//WARNING: added a coefficient to light color to make it less bright
+						Color light_color = light->color * light->getPointIntensity() * 0.6;
+						colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light_color);
+					}
 				}
 			}
 		}
 		else {
 			
-			//without jittering
-			/*Vector light_position = Vector(
-				light->position.x + light->width * rand_float(), 
-				light->position.y, 
-				light->position.z + light->height * rand_float()
-			);*/
-
 			//with jittering
-			light_dir = (light->getRandomLightPoint() - hit_point).normalize();
+			Vector light_point = light->spl == 0 ? light->position : light->getRandomLightPoint();
+
+			light_dir = (light_point - hit_point).normalize();
 
 			float light_normal_dot_product = light_dir * normal_vec;
 
@@ -670,7 +684,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 			colour += getDiffuseNSpecular(shadow_ray, material, rev_ray_dir, normal_vec, light_dir, light->color * 0.6);
 		}
 	}
-	//printf("%d _________________________________\n", scene->getNumLights());
 
 	if (depth >= MAX_DEPTH || (material->GetTransmittance() == 0 && material->GetReflection() == 0))
 		return colour;
@@ -707,7 +720,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	float Kr = R0 + (1 - R0) * pow(1 - cos_theta_Kr, 5);
 
 	// Reflection --> only if object isn't diffuse
-	// TODO: Should we add jittering?
+	// TODO: Fuzzy Reflections needed here?
 	if (material->GetReflection() > 0) {
 		Vector refl_ray_dir = ray.direction - normal_vec * (ray.direction * normal_vec) * 2;
 		Ray reflected_ray(refl_hit_point, refl_ray_dir);
@@ -727,18 +740,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 }
 
 // Render function by primary ray casting from the eye towards the scene's objects
-
-/*Ray getPrimaryRay(Camera* camera, Vector& pixel_sample) {
-	float aperture = camera->GetAperture();
-	if (aperture > 0) {
-		Vector lens_sample = rand_in_unit_circle() * aperture;
-		lens_sample.x /= camera->GetResX();
-		lens_sample.y /= camera->GetResY();
-		return camera->PrimaryRay(lens_sample, pixel_sample);
-	}
-	return camera->PrimaryRay(pixel_sample);
-}*/
-
 void renderScene()
 {
 	int index_pos = 0;
@@ -747,15 +748,17 @@ void renderScene()
 	float sqrt_spp = sqrt(scene->GetSamplesPerPixel());
 	Camera* camera = scene->GetCamera();
 
+	// viewport coordinates
+	Vector pixel_sample, lens_sample;
+	float aperture = camera->GetAperture();
+
+	set_rand_seed(time(NULL) * time(NULL));
+
 	if (drawModeEnabled)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 		camera->SetEye(Vector(camX, camY, camZ)); // Camera motion
 	}
-
-	// viewport coordinates
-	Vector pixel_sample, lens_sample;
-	float aperture = camera->GetAperture();
 
 	for (int y = 0; y < RES_Y; y++)
 	{
@@ -770,7 +773,6 @@ void renderScene()
 
 					Ray ray = camera->PrimaryRay(pixel_sample); // function from camera.h
 					color = rayTracing(ray, 1, 1.0);
-					//printf("FINAL: %f, %f, %f\n", color.r(), color.g(), color.b());
 				}
 				else { // Anti-aliasing => Average each ray's colour
 					for (int p = 0; p < sqrt_spp; p++) {
@@ -801,7 +803,8 @@ void renderScene()
 				// Average each ray's colour
 				for (int p = 0; p < sqrt_spp_dof; p++) {
 					for (int q = 0; q < sqrt_spp_dof; q++) {
-						lens_sample = rand_in_unit_circle(p * sqrt_spp_dof + q, sqrt_spp_dof) * aperture;
+						//lens_sample = rand_in_unit_circle() * aperture; //our implementation of random
+						lens_sample = rnd_unit_disk() * aperture;
 						
 						if (sqrt_spp != 0) { // Anti-aliasing => Each pixel sample is different
 							pixel_sample.x = x + get_rand(p, p + 1) / sqrt_spp_dof;
@@ -809,12 +812,10 @@ void renderScene()
 							
 						}
 
-						//printf("%f, %f, %f \n", pixel_sample.x, pixel_sample.y, pixel_sample.z);
 						Ray ray = camera->PrimaryRay(lens_sample, pixel_sample);
 						Color a = rayTracing(ray, 1, 1.0);
-						//printf("%f, %f, %f ///// ", a.r(), a.g(), a.b());
 						color += a;
-						//printf("%f, %f, %f\n", color.r(), color.g(), color.b());
+						
 					}
 				}
 
