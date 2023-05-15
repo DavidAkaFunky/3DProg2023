@@ -61,9 +61,10 @@ Vector Vector::operator/( float f )
 
 Vector&	Vector::normalize	()
 {
-				   float l=1.0/this->length();
-				   x *= l; y *= l; z *= l;
-				   return *this;
+	if (this->length() == 1) return *this;
+	float l=1.0/this->length();
+	x *= l; y *= l; z *= l;
+	return *this;
 }
 
 Vector&	Vector::operator-=(const Vector& v)

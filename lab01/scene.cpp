@@ -48,6 +48,8 @@ Vector Triangle::getNormal(Vector point)
 
 bool Triangle::intercepts(Ray& r, float& t ) {
 
+	r.direction.normalize();
+
 	//reference: scratch a pixel
 	//any point works
 	//TODO: CAN THIS BE DONE LIKE THIS?
@@ -63,7 +65,7 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	
 	t = v0 / vd;
 
-	if (t < 0)
+	if (fabs(t) < EPSILON)
 		return false;
 
 	Vector P = r.origin + r.direction * t;
@@ -74,19 +76,19 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	Vector edge0 = points[1] - points[0];
 	Vector vp0 = P - points[0];
 	C = edge0%vp0;
-	if (normal * C < 0) return false;
+	if (fabs(normal * C) < EPSILON) return false;
 
 	// edge 1
 	Vector edge1 = points[2] - points[1];
 	Vector vp1 = P - points[1];
 	C = edge1%vp1;
-	if (normal * C < 0)  return false;
+	if (fabs(normal * C) < EPSILON)  return false;
 
 	// edge 2
 	Vector edge2 = points[0] - points[2];
 	Vector vp2 = P - points[2];
 	C = edge2%vp2;
-	if (normal * C < 0) return false;
+	if (fabs(normal * C) < EPSILON) return false;
 
 	return true; // this ray hits the triangle
 }
@@ -121,6 +123,8 @@ Plane::Plane(Vector& P0, Vector& P1, Vector& P2)
 
 bool Plane::intercepts( Ray& r, float& t )
 {
+	r.direction.normalize();
+
 	// A plane is defined by the equation: Ax + By + Cz + D = 0, or the vector [A B C D].
 	// A, B, and C, define the normal to the plane, Pn = [A B C].
 	// the distance from the origin [0 0 0] to the plane is D.
@@ -150,6 +154,8 @@ Vector Plane::getNormal(Vector point)
 
 bool Sphere::intercepts(Ray& r, float& t )
 {
+	r.direction.normalize();
+
     Vector oc = center - r.origin;
     float b = r.direction * oc;
     float c = pow(oc.length(), 2) - SqRadius;
@@ -194,6 +200,8 @@ AABB aaBox::GetBoundingBox() {
 
 bool aaBox::intercepts(Ray& ray, float& t)
 {
+	ray.direction.normalize();
+
 	//tirado dos slides (?)
 	double tx_min = 0, ty_min = 0, tz_min = 0;
 	double tx_max = 0, ty_max = 0, tz_max = 0;
