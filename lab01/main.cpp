@@ -508,14 +508,22 @@ Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir
 	if (in_shadow)
 		return colour;
 
-	Color diffuse_colour = material->GetDiffColor() * material->GetDiffuse() * (light_dir * normal_vec);
+	float light_normal_dot_prod = light_dir * normal_vec;
+	
+	Color diffuse_colour;
+	if (light_normal_dot_prod > 0) {
+		diffuse_colour = material->GetDiffColor() * material->GetDiffuse() * light_normal_dot_prod;
+	}
 
 	// Halfway vector approximation
 	Vector halfway_vec = (light_dir + hit_ray_dir).normalize();
 
 	float halfway_product = halfway_vec * normal_vec;
 
-	Color specular_colour = material->GetSpecColor() * material->GetSpecular() * pow(halfway_product, material->GetShine());
+	Color specular_colour;
+	if (halfway_product > 0) {
+		specular_colour = material->GetSpecColor() * material->GetSpecular() * pow(halfway_product, material->GetShine());
+	}
 
 	colour += light_colour * (diffuse_colour + specular_colour);
 	return colour;
@@ -541,11 +549,10 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 
 		for (int p = 0; p < sqrt_num_samples; p++) {
 			for (int q = 0; q < sqrt_num_samples; q++) {
-				//mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
-				mod_refl_ray_dir = (refl_ray_dir + rnd_unit_sphere() * roughness).normalize();
+				mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
+				//mod_refl_ray_dir = (refl_ray_dir + rnd_unit_sphere() * roughness).normalize();
 				
 				if (mod_refl_ray_dir * normal_vec < 0) {
-					colour += material->GetSpecColor();
 					continue;
 				}
 
@@ -634,7 +641,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 				float light_normal_dot_product = light_dir * normal_vec;
 
-				if (light_normal_dot_product < 0)
+				if (light_normal_dot_product <= 0)
 					continue;
 
 				Ray shadow_ray(refl_hit_point, light_dir);
@@ -675,7 +682,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 
 			float light_normal_dot_product = light_dir * normal_vec;
 
-			if (light_normal_dot_product < 0)
+			if (light_normal_dot_product <= 0)
 				continue;
 
 			Ray shadow_ray(refl_hit_point, light_dir);
@@ -803,8 +810,8 @@ void renderScene()
 				// Average each ray's colour
 				for (int p = 0; p < sqrt_spp_dof; p++) {
 					for (int q = 0; q < sqrt_spp_dof; q++) {
-						//lens_sample = rand_in_unit_circle() * aperture; //our implementation of random
-						lens_sample = rnd_unit_disk() * aperture;
+						lens_sample = rand_in_unit_circle() * aperture; //our implementation of random
+						//lens_sample = rnd_unit_disk() * aperture;
 						
 						if (sqrt_spp != 0) { // Anti-aliasing => Each pixel sample is different
 							pixel_sample.x = x + get_rand(p, p + 1) / sqrt_spp_dof;
