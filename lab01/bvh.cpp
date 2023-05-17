@@ -138,17 +138,62 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		
 	}
 
+Object* BVH::findIntersection(Ray& ray, BVHNode* currentNode, float t_ret) {
+	float t1 = 0.0, t2 = 0.0, t;
+	float tmin = FLT_MAX;
+	Object* closestObj = NULL;
+
+	if (!currentNode->getAABB().intercepts(ray, t)) {
+		t_ret = FLT_MAX;
+		return NULL;
+	}
+
+	if (currentNode->isLeaf()) { //find the closest hit with the objects of the node
+		for (int i = currentNode->getIndex(); i < currentNode->getNObjs(); i++) {
+			objects[i]->intercepts(ray, t);
+			if (t > 0 && t < tmin) {
+				tmin = t;
+				closestObj = objects[i];
+			}
+		}
+	}
+	else {
+		Object* c1 = findIntersection(ray, nodes[currentNode->getIndex()], t1); // Test node’s children
+		Object* c2 = findIntersection(ray, nodes[currentNode->getIndex() + 1], t2); // Test node’s children
+		if (t1 > t2) {
+			t = t2;
+			closestObj = c2;
+		}
+		else {
+			t = t1;
+			closestObj = c1;
+		}
+		if (t > 0 && t < tmin) t_ret = t;
+
+		/*
+		Sort child intersections front to back
+		Process intersections (checking for early termination)
+			for each intersected child {
+			if (min_t < bv_t[child]) continue; //no need to traverse the child
+			t = FindIntersection(ray, child);
+			if (t > 0 && t < min_t ) min_t = t
+			}*/
+	}
+	t_ret = tmin;
+	return closestObj;
+}
+
 
 bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
-			float tmp;
-			float tmin = FLT_MAX;  //contains the closest primitive intersection
-			bool hit = false;
+	float closestDistance = 0.0, t = 0.0;
+	float tmin = FLT_MAX;  //contains the closest primitive intersection
+	bool hit = false;
 
-			BVHNode* currentNode = nodes[0];
-
-			//PUT YOUR CODE HERE
-			
-			return(false);
+	BVHNode* currentNode = nodes[0]; //root
+	*hit_obj = findIntersection(ray, nodes[0], closestDistance);
+	hit_point = ray.origin + ray.direction * closestDistance;
+	return false;
+	
 	}
 
 bool BVH::Traverse(Ray& ray) {  //shadow ray with length

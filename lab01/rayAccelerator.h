@@ -89,5 +89,6 @@ public:
 	void build_recursive(int left_index, int right_index, BVHNode* node);
 	bool Traverse(Ray& ray, Object** hit_obj, Vector& hit_point);
 	bool Traverse(Ray& ray);
+	Object* findIntersection(Ray& ray, BVHNode* currentNode, float min_distance);
 };
 #endif
