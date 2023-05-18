@@ -65,7 +65,7 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	
 	t = v0 / vd;
 
-	if (fabs(t) < EPSILON)
+	if (t < 0)
 		return false;
 
 	Vector P = r.origin + r.direction * t;
@@ -76,19 +76,19 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	Vector edge0 = points[1] - points[0];
 	Vector vp0 = P - points[0];
 	C = edge0%vp0;
-	if (fabs(normal * C) < EPSILON) return false;
+	if (normal * C <= 0) return false;
 
 	// edge 1
 	Vector edge1 = points[2] - points[1];
 	Vector vp1 = P - points[1];
 	C = edge1%vp1;
-	if (fabs(normal * C) < EPSILON)  return false;
+	if (normal * C <= 0)  return false;
 
 	// edge 2
 	Vector edge2 = points[0] - points[2];
 	Vector vp2 = P - points[2];
 	C = edge2%vp2;
-	if (fabs(normal * C) < EPSILON) return false;
+	if (normal * C <= 0) return false;
 
 	return true; // this ray hits the triangle
 }

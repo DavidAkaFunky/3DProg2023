@@ -88,9 +88,9 @@ public:
 
 		aux.x = w * (pixel_sample.x / res_x - 0.5);
 		aux.y = h * (pixel_sample.y / res_y - 0.5);
-		aux.z = -(plane_dist);
+		aux.z = - plane_dist;
 		
-		Vector focal_plane_sample =  aux * focal_ratio;
+		Vector focal_plane_sample = aux * focal_ratio;
 		
 		Vector eye_offset = eye + u * lens_sample.x + v * lens_sample.y;
 		
