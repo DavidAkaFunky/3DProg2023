@@ -86,8 +86,8 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	std::sort(objects.begin() + left_index, objects.end() + right_index - left_index, cmp);
 
 	//find split index
-	for(int i = left_index; i < right_index; i++) {
-		if(objects.at(i)->GetBoundingBox().centroid().getAxisValue(max_axis) > mid_point) {
+	for (int i = left_index; i < right_index; i++) {
+		if (objects.at(i)->GetBoundingBox().centroid().getAxisValue(max_axis) > mid_point) {
 			split_index = i;
 			break;
 		}

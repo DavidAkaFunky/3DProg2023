@@ -77,7 +77,7 @@ Scene* scene = NULL;
 
 Grid* grid_ptr = NULL;
 BVH* bvh_ptr = NULL;
-accelerator Accel_Struct = GRID_ACC;
+accelerator Accel_Struct;
 
 int RES_X, RES_Y;
 
@@ -753,6 +753,7 @@ void renderScene()
 	unsigned int counter = 0;
 	float sqrt_spp = sqrt(scene->GetSamplesPerPixel());
 	Camera* camera = scene->GetCamera();
+	Accel_Struct = scene->GetAccelStruct();
 
 	// viewport coordinates
 	Vector pixel_sample, lens_sample;
