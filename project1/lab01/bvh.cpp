@@ -36,6 +36,7 @@ void BVH::Build(vector<Object *> &objs) {
 
 	for (Object* obj : objs) {
 		AABB bbox = obj->GetBoundingBox();
+		// printf("MIN: %f %f %f\nMAX: %f %f %f\n", bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x, bbox.max.y, bbox.max.z);
 		world_bbox.extend(bbox);
 		objects.push_back(obj);
 	}
@@ -47,10 +48,12 @@ void BVH::Build(vector<Object *> &objs) {
 }
 
 void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
+
 	if (right_index - left_index <= Threshold) {
 		node->makeLeaf(left_index, right_index - left_index);
 		return;
 	}
+
 	float range_x = 0, range_y = 0, range_z = 0;
 	float mid_point = 0;
 	int split_index = 0;
@@ -76,14 +79,14 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		max_axis = 2;
 	}
 
-	// range_x > range_y ? (range_x > range_z ? mid_point = range_x/2, max_axis = 0 : mid_point = range_z/2, max_axis = 2) 
-	// : (range_y > range_z ? mid_point = range_y/2, max_axis = 1 : mid_point = range_z/2, max_axis = 2);
+	//range_x > range_y ? (range_x > range_z ? mid_point = range_x/2, max_axis = 0 : mid_point = range_z/2, max_axis = 2) 
+	//: (range_y > range_z ? mid_point = range_y/2, max_axis = 1 : mid_point = range_z/2, max_axis = 2);
 
 	Comparator cmp = Comparator();
 	cmp.dimension = max_axis;
-		
+
 	//Sort objects by maxAxis
-	std::sort(objects.begin() + left_index, objects.end() + right_index - left_index, cmp);
+	std::sort(objects.begin() + left_index, objects.begin() + right_index - left_index, cmp);
 
 	//find split index
 	for (int i = left_index; i < right_index; i++) {
