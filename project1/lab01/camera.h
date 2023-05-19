@@ -76,7 +76,7 @@ public:
 
 		x = w * (pixel_sample.x / res_x - 0.5);
 		y = h * (pixel_sample.y / res_y - 0.5);
-		z = -(plane_dist);
+		z = - plane_dist;
 
 		Vector ray_dir = (u * x + v * y + n * z).normalize();
 		return Ray(eye, ray_dir);  

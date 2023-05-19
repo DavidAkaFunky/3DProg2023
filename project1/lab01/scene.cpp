@@ -76,19 +76,19 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	Vector edge0 = points[1] - points[0];
 	Vector vp0 = P - points[0];
 	C = edge0%vp0;
-	if (normal * C <= 0) return false;
+	if (normal * C < 0) return false;
 
 	// edge 1
 	Vector edge1 = points[2] - points[1];
 	Vector vp1 = P - points[1];
 	C = edge1%vp1;
-	if (normal * C <= 0)  return false;
+	if (normal * C < 0)  return false;
 
 	// edge 2
 	Vector edge2 = points[0] - points[2];
 	Vector vp2 = P - points[2];
 	C = edge2%vp2;
-	if (normal * C <= 0) return false;
+	if (normal * C < 0) return false;
 
 	return true; // this ray hits the triangle
 }
@@ -128,12 +128,9 @@ bool Plane::intercepts( Ray& r, float& t )
 	// A plane is defined by the equation: Ax + By + Cz + D = 0, or the vector [A B C D].
 	// A, B, and C, define the normal to the plane, Pn = [A B C].
 	// the distance from the origin [0 0 0] to the plane is D.
-	// 
-	// Regular normal or shading normal?
+
 	float vd = PN * r.direction;
 
-	//printf("%f, %f, %f\n", PN.x, PN.y, PN.z);
-	//printf("%f, %f, %f\n", r.direction.x, r.direction.y, r.direction.z);
 	//ray is parallel to plane
 	if (vd == 0)
 		return false;
@@ -168,8 +165,8 @@ bool Sphere::intercepts(Ray& r, float& t )
     if (delta <= 0)
         return false;
 
-    float sqrtDelta = sqrt(delta);
-	t = (c > 0 ? b - sqrtDelta : b + sqrtDelta);
+    float sqrt_delta = sqrt(delta);
+	t = (c > 0 ? b - sqrt_delta : b + sqrt_delta);
 
     return true;
 }
@@ -182,7 +179,6 @@ Vector Sphere::getNormal( Vector point )
 }
 
 AABB Sphere::GetBoundingBox() {
-	//PUT HERE YOUR CODE
 	Vector a_min = Vector(center.x - radius, center.y - radius, center.z - radius);
 	Vector a_max = Vector(center.x + radius, center.y + radius, center.z + radius);
 	return(AABB(a_min, a_max));
