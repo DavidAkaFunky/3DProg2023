@@ -138,18 +138,18 @@ Ray getRay(Camera cam, vec2 pixelSample)  //rnd pixelSample viewport coordinates
     float time = cam.time0 + hash1(gSeed) * (cam.time1 - cam.time0);
     
     vec3 aux = vec3(
-        cam.width * (pixelSample.x / iResolution.x - 0.5);
-		cam.height * (pixelSample.y / iResolution.y - 0.5);
+        cam.width * (pixelSample.x / iResolution.x - 0.5),
+		cam.height * (pixelSample.y / iResolution.y - 0.5),
 		- cam.planeDist
     );
 
-    vec3 focalPlaneSample = aux * focusDist;
+    vec3 focalPlaneSample = aux * cam.focusDist;
 
     vec3 eyeOffset = cam.eye + cam.u * ls.x + cam.v * ls.y;
 
     vec3 rayDirection = normalize(
-        cam.u * (focalPlaneSample.x - lens_sample.x) + 
-        cam.v * (focalPlaneSample.y - lens_sample.y) + 
+        cam.u * (focalPlaneSample.x - ls.x) + 
+        cam.v * (focalPlaneSample.y - ls.y) + 
         cam.n * focalPlaneSample.z
     );
 
@@ -233,7 +233,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     }
     if(rec.material.type == MT_METAL)
     {
-        vec reflNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
+        vec3 reflNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
         vec3 reflected = reflect(rIn.d, reflNormal);
         rScattered = createRay(rec.pos + epsilon * reflNormal, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)));
         atten = rec.material.specColor;
@@ -250,8 +250,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         {
             outwardNormal = -rec.normal;
             niOverNt = rec.material.refIdx;
-            cosine = refraction cosine for schlick; 
-            atten = apply Beer's law by using rec.material.refractColor
+            // cosine = refraction cosine for schlick; 
+            // atten = apply Beer's law by using rec.material.refractColor
         }
         else  //hit from outside
         {
