@@ -197,9 +197,15 @@ vec3 rayColor(Ray r)
             //calculate secondary ray and update throughput
             Ray scatterRay;
             vec3 atten;
-            if(scatter(r, rec, atten, scatterRay))
-            {   //  insert your code here    }
-        
+            if (scatter(r, rec, atten, scatterRay)) //scatterRay is the secondary ray
+            {
+                throughput *= atten;
+                r = scatterRay;
+            }
+            else {
+                col += throughput; // TODO: Check if this is correct
+                break;
+            }
         }
         else  //background
         {
