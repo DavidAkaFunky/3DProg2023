@@ -280,46 +280,47 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     return false;
 }
 
-struct Triangle {vec3 a; vec3 b; vec3 c; };
+struct Triangle {vec3 a; vec3 b; vec3 c; vec3 normal;};
 
 Triangle createTriangle(vec3 v0, vec3 v1, vec3 v2)
 {
     Triangle t;
     t.a = v0; t.b = v1; t.c = v2;
+    t.normal = normalize(cross(v1 - v0, v2 - v0));
     return t;
 }
 
-bool hit_triangle(Triangle t, Ray r, float tmin, float tmax, out HitRecord rec)
+bool hit_triangle(Triangle triangle, Ray r, float tmin, float tmax, out HitRecord rec)
 {
-    float vd = dot(r.d, t.normal);
+    float vd = dot(r.d, triangle.normal);
 
     if (vd == 0.0) return false;
 
-    float d = - dot(t.normal, t.a);
-    float t = -(dot(t.normal, r.o) + d) / vd;
+    float d = - dot(triangle.normal, triangle.a);
+    float t = -(dot(triangle.normal, r.o) + d) / vd;
 
-    if (t < 0 || t < tmin || t > tmax) return false;
+    if (t < 0.0 || t < tmin || t > tmax) return false;
 
     vec3 p = pointOnRay(r, t);
     vec3 c;
 
-    vec3 edge0 = t.b - t.a;
-    vec3 vp0 = p - t.a;
+    vec3 edge0 = triangle.b - triangle.a;
+    vec3 vp0 = p - triangle.a;
     c = cross(edge0, vp0);
-    if (dot(t.normal, c) < 0) return false;
+    if (dot(triangle.normal, c) < 0.0) return false;
 
-    vec3 edge1 = t.c - t.b;
-    vec3 vp1 = p - t.b;
+    vec3 edge1 = triangle.c - triangle.b;
+    vec3 vp1 = p - triangle.b;
     c = cross(edge1, vp1);
-    if (dot(t.normal, c) < 0) return false;
+    if (dot(triangle.normal, c) < 0.0) return false;
 
-    vec3 edge2 = t.a - t.c;
-    vec3 vp2 = p - t.c;
+    vec3 edge2 = triangle.a - triangle.c;
+    vec3 vp2 = p - triangle.c;
     c = cross(edge2, vp2);
-    if (dot(t.normal, c) < 0) return false;
+    if (dot(triangle.normal, c) < 0.0) return false;
 
     rec.t = t;
-    rec.normal = normal;
+    rec.normal = triangle.normal;
     rec.pos = p;
     return true;
 }
@@ -383,12 +384,12 @@ bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
 
     float sqrtDelta = sqrt(delta);
 
-    t = (c > 0.0) ? b - sqrtDelta : b + sqrtDelta;
+    float t = (c > 0.0) ? b - sqrtDelta : b + sqrtDelta;
 	
     if (t < tmax && t > tmin) {
         rec.t = t;
         rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normal
+        rec.normal = normalize(-oc);
         return true;
     }
 
