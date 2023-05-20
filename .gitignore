@@ -1,5 +1,6 @@
 .vs/
 */.vs/
 *Dependencies
+*Debug
 *x64
 .png
