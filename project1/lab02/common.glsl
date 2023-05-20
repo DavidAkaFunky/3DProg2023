@@ -132,20 +132,34 @@ Camera createCamera(
     return cam;
 }
 
-Ray getRay(Camera cam, vec2 pixel_sample)  //rnd pixel_sample viewport coordinates
+Ray getRay(Camera cam, vec2 pixelSample)  //rnd pixelSample viewport coordinates
 {
     vec2 ls = cam.lensRadius * randomInUnitDisk(gSeed);  //ls - lens sample for DOF
     float time = cam.time0 + hash1(gSeed) * (cam.time1 - cam.time0);
     
-    //Calculate eye_offset and ray direction
+    vec3 aux = vec3(
+        cam.width * (pixelSample.x / iResolution.x - 0.5),
+		cam.height * (pixelSample.y / iResolution.y - 0.5),
+		- cam.planeDist
+    );
 
-    return createRay(eye_offset, normalize(ray direction), time);
+    vec3 focalPlaneSample = aux * cam.focusDist;
+
+    vec3 eyeOffset = cam.eye + cam.u * ls.x + cam.v * ls.y;
+
+    vec3 rayDirection = normalize(
+        cam.u * (focalPlaneSample.x - ls.x) + 
+        cam.v * (focalPlaneSample.y - ls.y) + 
+        cam.n * focalPlaneSample.z
+    );
+
+    return createRay(eyeOffset, normalize(rayDirection), time);
 }
 
 // MT_ material type
 #define MT_DIFFUSE 0
 #define MT_METAL 1
-#define MT_DIALECTRIC 2
+#define MT_DIELECTRIC 2
 
 struct Material
 {
@@ -154,7 +168,7 @@ struct Material
     vec3 specColor;  //the color tint for specular reflections. for metals and opaque dieletrics like coloured glossy plastic
     vec3 emissive; //
     float roughness; // controls roughness for metals. It can be used for rough refractions
-    float refIdx; // index of refraction for dialectric
+    float refIdx; // index of refraction for dielectric
     vec3 refractColor; // absorption for beer's law
 };
 
@@ -182,10 +196,10 @@ Material createMetalMaterial(vec3 specClr, float roughness)
     return m;
 }
 
-Material createDialectricMaterial(vec3 refractClr, float refIdx, float roughness)
+Material createDielectricMaterial(vec3 refractClr, float refIdx, float roughness)
 {
     Material m;
-    m.type = MT_DIALECTRIC;
+    m.type = MT_DIELECTRIC;
     m.albedo = vec3(0.0);
     m.specColor = vec3(0.04);
     m.refIdx = refIdx;
@@ -206,24 +220,26 @@ struct HitRecord
 
 float schlick(float cosine, float refIdx)
 {
-    //INSERT YOUR CODE HERE
+    // TODO: Are we assuming one of the two media is air => the other refIdx is 1.0 ????
 }
 
 bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 {
     if(rec.material.type == MT_DIFFUSE)
     {
-        //INSERT CODE HERE,
+        rScattered = createRay(rec.pos + epsilon * rec.normal, randomUnitVector(gSeed));
         atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
         return true;
     }
     if(rec.material.type == MT_METAL)
     {
-       //INSERT CODE HERE, consider fuzzy reflections
+        vec3 reflNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
+        vec3 reflected = reflect(rIn.d, reflNormal);
+        rScattered = createRay(rec.pos + epsilon * reflNormal, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)));
         atten = rec.material.specColor;
         return true;
     }
-    if(rec.material.type == MT_DIALECTRIC)
+    if(rec.material.type == MT_DIELECTRIC)
     {
         atten = vec3(1.0);
         vec3 outwardNormal;
@@ -234,8 +250,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         {
             outwardNormal = -rec.normal;
             niOverNt = rec.material.refIdx;
-            cosine = refraction cosine for schlick; 
-            atten = apply Beer's law by using rec.material.refractColor
+            // cosine = refraction cosine for schlick; 
+            // atten = apply Beer's law by using rec.material.refractColor
         }
         else  //hit from outside
         {
@@ -258,34 +274,55 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         //else  //Refraction
         // rScattered = calculate refracted ray
            // atten *= vec3(1.0 - reflectProb); not necessary since we are only scattering 1-reflectProb rays and not all refracted rays
-        }
 
         return true;
     }
     return false;
 }
 
-struct Triangle {vec3 a; vec3 b; vec3 c; };
+struct Triangle {vec3 a; vec3 b; vec3 c; vec3 normal;};
 
 Triangle createTriangle(vec3 v0, vec3 v1, vec3 v2)
 {
     Triangle t;
     t.a = v0; t.b = v1; t.c = v2;
+    t.normal = normalize(cross(v1 - v0, v2 - v0));
     return t;
 }
 
-bool hit_triangle(Triangle t, Ray r, float tmin, float tmax, out HitRecord rec)
+bool hit_triangle(Triangle triangle, Ray r, float tmin, float tmax, out HitRecord rec)
 {
-    //INSERT YOUR CODE HERE
-    //calculate a valid t and normal
-    if(t < tmax && t > tmin)
-    {
-        rec.t = t;
-        rec.normal = normal;
-        rec.pos = pointOnRay(r, rec.t);
-        return true;
-    }
-    return false;
+    float vd = dot(r.d, triangle.normal);
+
+    if (vd == 0.0) return false;
+
+    float d = - dot(triangle.normal, triangle.a);
+    float t = -(dot(triangle.normal, r.o) + d) / vd;
+
+    if (t < 0.0 || t < tmin || t > tmax) return false;
+
+    vec3 p = pointOnRay(r, t);
+    vec3 c;
+
+    vec3 edge0 = triangle.b - triangle.a;
+    vec3 vp0 = p - triangle.a;
+    c = cross(edge0, vp0);
+    if (dot(triangle.normal, c) < 0.0) return false;
+
+    vec3 edge1 = triangle.c - triangle.b;
+    vec3 vp1 = p - triangle.b;
+    c = cross(edge1, vp1);
+    if (dot(triangle.normal, c) < 0.0) return false;
+
+    vec3 edge2 = triangle.a - triangle.c;
+    vec3 vp2 = p - triangle.c;
+    c = cross(edge2, vp2);
+    if (dot(triangle.normal, c) < 0.0) return false;
+
+    rec.t = t;
+    rec.normal = triangle.normal;
+    rec.pos = p;
+    return true;
 }
 
 
@@ -335,16 +372,28 @@ vec3 center(MovingSphere mvsphere, float time)
 
 bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
 {
-    //INSERT YOUR CODE HERE
-    //calculate a valid t and normal
+    vec3 oc = s.center - r.o;
+    float b = dot(r.d, oc);
+    float c = dot(oc, oc) - s.radius * s.radius;
+
+    if (c > 0.0 && b <= 0.0) return false;
+
+    float delta = b * b - c;
+
+    if (delta <= 0.0) return false;
+
+    float sqrtDelta = sqrt(delta);
+
+    float t = (c > 0.0) ? b - sqrtDelta : b + sqrtDelta;
 	
-    if(t < tmax && t > tmin) {
+    if (t < tmax && t > tmin) {
         rec.t = t;
         rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normal
+        rec.normal = normalize(-oc);
         return true;
     }
-    else return false;
+
+    return false;
 }
 
 bool hit_movingSphere(MovingSphere s, Ray r, float tmin, float tmax, out HitRecord rec)

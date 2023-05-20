@@ -55,10 +55,10 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec))
     {
         hit = true;
-        rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
+        rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.0);
     }
 
-if(hit_sphere(
+    if(hit_sphere(
         createSphere(vec3(0.0, 1.0, 0.0), -0.95),
         r,
         tmin,
@@ -66,7 +66,7 @@ if(hit_sphere(
         rec))
     {
         hit = true;
-        rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
+        rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.0);
     }
    
     int numxy = 5;
@@ -144,7 +144,7 @@ if(hit_sphere(
                 }
                 else
                 {
-                    // glass (dialectric)
+                    // glass (dielectric)
                     if(hit_sphere(
                         createSphere(center, 0.2),
                         r,
@@ -153,8 +153,8 @@ if(hit_sphere(
                         rec))
                     {
                         hit = true;
-                        rec.material.type = MT_DIALECTRIC;
-                        rec.material = createDialectricMaterial(hash3(seed), 1.2, 0.0);
+                        rec.material.type = MT_DIELECTRIC;
+                        rec.material = createDielectricMaterial(hash3(seed), 1.2, 0.0);
                     }
                 }
             }
@@ -197,9 +197,15 @@ vec3 rayColor(Ray r)
             //calculate secondary ray and update throughput
             Ray scatterRay;
             vec3 atten;
-            if(scatter(r, rec, atten, scatterRay))
-            {   //  insert your code here    }
-        
+            if (scatter(r, rec, atten, scatterRay)) //scatterRay is the secondary ray
+            {
+                throughput *= atten;
+                r = scatterRay;
+            }
+            else {
+                col += throughput; // TODO: Check if this is correct
+                break;
+            }
         }
         else  //background
         {
