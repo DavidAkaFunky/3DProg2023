@@ -548,8 +548,8 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 
 		for (int p = 0; p < sqrt_num_samples; p++) {
 			for (int q = 0; q < sqrt_num_samples; q++) {
-				mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
-				//mod_refl_ray_dir = (refl_ray_dir + rnd_unit_sphere() * roughness).normalize();
+				//mod_refl_ray_dir = (refl_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
+				mod_refl_ray_dir = (refl_ray_dir + rnd_unit_sphere() * roughness).normalize();
 				
 				if (mod_refl_ray_dir * normal_vec < 0) {
 					continue;
@@ -621,7 +621,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	// To account for acne spots
 	Vector refl_hit_point = hit_point + normal_vec * EPSILON;
 	
-
 	float sqrt_spl;
 
 	for (int i = 0; i < scene->getNumLights(); i++)
@@ -809,8 +808,8 @@ void renderScene()
 				// Average each ray's colour
 				for (int p = 0; p < sqrt_spp_dof; p++) {
 					for (int q = 0; q < sqrt_spp_dof; q++) {
-						lens_sample = rand_in_unit_circle() * aperture; //our implementation of random
-						//lens_sample = rnd_unit_disk() * aperture;
+						//lens_sample = rand_in_unit_circle() * aperture; //our implementation of random
+						lens_sample = rnd_unit_disk() * aperture;
 						
 						if (sqrt_spp != 0) { // Anti-aliasing => Each pixel sample is different
 							pixel_sample.x = x + get_rand(p, p + 1) / sqrt_spp_dof;

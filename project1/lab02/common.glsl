@@ -220,7 +220,9 @@ struct HitRecord
 
 float schlick(float cosine, float refIdx)
 {
-    // TODO: Are we assuming one of the two media is air => the other refIdx is 1.0 ????
+    // Assuming one of the media is air/vacuum (refIdx = 1.0)
+    float r0 = pow((1.0 - refIdx) / (1.0 + refIdx), 2.0);
+    return r0 + (1.0 - r0) * pow(1.0 - cosine, 5.0);
 }
 
 bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
@@ -231,9 +233,11 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
         return true;
     }
+    
+    vec3 reflNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
+
     if(rec.material.type == MT_METAL)
     {
-        vec3 reflNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
         vec3 reflected = reflect(rIn.d, reflNormal);
         rScattered = createRay(rec.pos + epsilon * reflNormal, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)));
         atten = rec.material.specColor;
@@ -242,38 +246,37 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     if(rec.material.type == MT_DIELECTRIC)
     {
         atten = vec3(1.0);
-        vec3 outwardNormal;
         float niOverNt;
-        float cosine;
-
+        
         if(dot(rIn.d, rec.normal) > 0.0) //hit inside
         {
-            outwardNormal = -rec.normal;
             niOverNt = rec.material.refIdx;
-            // cosine = refraction cosine for schlick; 
-            // atten = apply Beer's law by using rec.material.refractColor
+            atten = exp(-rec.material.refractColor * rec.t);
         }
-        else  //hit from outside
+        else
         {
-            outwardNormal = rec.normal;
             niOverNt = 1.0 / rec.material.refIdx;
-            cosine = -dot(rIn.d, rec.normal); 
         }
 
-        //Use probabilistic math to decide if scatter a reflected ray or a refracted ray
+        float cosine = dot(-rIn.d, reflNormal); 
+
+        vec3 tangentVec = rIn.d + reflNormal * cosine;
+
+        float sinThetaI = length(tangentVec);
+
+        tangentVec = normalize(tangentVec);
 
         float reflectProb;
 
-        //if no total reflection  reflectProb = schlick(cosine, rec.material.refIdx);  
-        //else reflectProb = 1.0;
+        if (sinThetaI > 1.0) 
+            reflectProb = 1.0;  //total internal reflection
+        else
+            reflectProb = schlick(cosine, rec.material.refIdx);  
 
-        if( hash1(gSeed) < reflectProb)  //Reflection
-        // rScattered = calculate reflected ray
-          // atten *= vec3(reflectProb); not necessary since we are only scattering reflectProb rays and not all reflected rays
-        
-        //else  //Refraction
-        // rScattered = calculate refracted ray
-           // atten *= vec3(1.0 - reflectProb); not necessary since we are only scattering 1-reflectProb rays and not all refracted rays
+        if(hash1(gSeed) < reflectProb)  //Reflection
+            rScattered = createRay(rec.pos + epsilon * reflNormal, reflect(rIn.d, reflNormal));
+        else  //Refraction
+        rScattered = createRay(rec.pos - epsilon * reflNormal, refract(rIn.d, -reflNormal, niOverNt));
 
         return true;
     }
@@ -329,7 +332,7 @@ bool hit_triangle(Triangle triangle, Ray r, float tmin, float tmax, out HitRecor
 struct Sphere
 {
     vec3 center;
-    float radius;
+    float radius, sqRadius;
 };
 
 Sphere createSphere(vec3 center, float radius)
@@ -337,6 +340,7 @@ Sphere createSphere(vec3 center, float radius)
     Sphere s;
     s.center = center;
     s.radius = radius;
+    s.sqRadius = radius * radius;
     return s;
 }
 
@@ -344,8 +348,9 @@ Sphere createSphere(vec3 center, float radius)
 struct MovingSphere
 {
     vec3 center0, center1;
-    float radius;
+    float radius, sqRadius;
     float time0, time1;
+    vec3 velocity;
 };
 
 MovingSphere createMovingSphere(vec3 center0, vec3 center1, float radius, float time0, float time1)
@@ -354,27 +359,23 @@ MovingSphere createMovingSphere(vec3 center0, vec3 center1, float radius, float 
     s.center0 = center0;
     s.center1 = center1;
     s.radius = radius;
+    s.sqRadius = radius * radius;
     s.time0 = time0;
     s.time1 = time1;
+    s.velocity = (center1 - center0) / (time1 - time0);
     return s;
 }
 
 vec3 center(MovingSphere mvsphere, float time)
 {
-    return moving_center;
+    return mvsphere.center0 + (time - mvsphere.time0) * mvsphere.velocity;
 }
 
-
-/*
- * The function naming convention changes with these functions to show that they implement a sort of interface for
- * the book's notion of "hittable". E.g. hit_<type>.
- */
-
-bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
+bool hit_genericSphere(vec3 center, float radius, float sqRadius, Ray r, float tmin, float tmax, out HitRecord rec)
 {
-    vec3 oc = s.center - r.o;
+    vec3 oc = center - r.o;
     float b = dot(r.d, oc);
-    float c = dot(oc, oc) - s.radius * s.radius;
+    float c = dot(oc, oc) - sqRadius;
 
     if (c > 0.0 && b <= 0.0) return false;
 
@@ -385,35 +386,29 @@ bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
     float sqrtDelta = sqrt(delta);
 
     float t = (c > 0.0) ? b - sqrtDelta : b + sqrtDelta;
-	
+    
     if (t < tmax && t > tmin) {
         rec.t = t;
-        rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normalize(-oc);
+        rec.pos = pointOnRay(r, t);
+        rec.normal = (rec.pos - center) / radius;
         return true;
     }
-
     return false;
+}
+
+/*
+ * The function naming convention changes with these functions to show that they implement a sort of interface for
+ * the book's notion of "hittable". E.g. hit_<type>.
+ */
+
+bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
+{
+    return hit_genericSphere(s.center, s.radius, s.sqRadius, r, tmin, tmax, rec);
 }
 
 bool hit_movingSphere(MovingSphere s, Ray r, float tmin, float tmax, out HitRecord rec)
 {
-    float B, C, delta;
-    bool outside;
-    float t;
-
-
-     //INSERT YOUR CODE HERE
-     //Calculate the moving center
-    //calculate a valid t and normal
-	
-    if(t < tmax && t > tmin) {
-        rec.t = t;
-        rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normal;
-        return true;
-    }
-    else return false;
+    return hit_genericSphere(center(s, r.t), s.radius, s.sqRadius, r, tmin, tmax, rec);;
 }
 
 struct pointLight {

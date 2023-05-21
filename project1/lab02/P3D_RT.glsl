@@ -24,6 +24,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec.material = createDiffuseMaterial(vec3(0.2));
     }
 
+    // GREEN SPHERE
     if(hit_sphere(
         createSphere(vec3(-4.0, 1.0, 0.0), 1.0),
         r,
@@ -36,6 +37,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         //rec.material = createDiffuseMaterial(vec3(0.4, 0.2, 0.1));
     }
 
+    // ORANGE SPHERE
     if(hit_sphere(
         createSphere(vec3(4.0, 1.0, 0.0), 1.0),
         r,
@@ -47,6 +49,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec.material = createMetalMaterial(vec3(0.7, 0.6, 0.5), 0.0);
     }
 
+    // GLASS SPHERE
     if(hit_sphere(
         createSphere(vec3(0.0, 1.0, 0.0), 1.0),
         r,
@@ -58,6 +61,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.0);
     }
 
+    // INSIDE GLASS SPHERE
     if(hit_sphere(
         createSphere(vec3(0.0, 1.0, 0.0), -0.95),
         r,
@@ -164,12 +168,36 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 }
 
 vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
-    vec3 diffCol, specCol;
     vec3 colorOut = vec3(0.0, 0.0, 0.0);
-    float shininess;
     HitRecord dummy;
 
-   //INSERT YOUR CODE HERE
+    vec3 lightDir = normalize(pl.pos - rec.pos);
+    float lightNormalDotProd = dot(lightDir, rec.normal);
+    if (lightNormalDotProd <= 0.0)
+        return colorOut;
+
+    Ray shadowRay = createRay(rec.pos, lightDir);
+    if (hit_world(shadowRay, 0.001, 10000.0, dummy))
+        return colorOut;
+
+    Material material = rec.material;
+    vec3 diffCol = material.emissive; // TODO: Is this the diffuse colour?
+    colorOut += diffCol * pl.color * lightNormalDotProd;
+
+    vec3 specCol = material.specColor;
+    if (specCol == vec3(0.0))
+        return colorOut;
+
+    float shininess = 1.0; // TODO: What is the shininess meant to be?
+    vec3 revViewDir = normalize(rec.pos - r.o);
+    vec3 halfwayVec = normalize(revViewDir + lightDir);
+    float halfNormalDotProd = dot(halfwayVec, rec.normal);
+
+    if (halfNormalDotProd <= 0.0)
+        return colorOut;
+
+    float specular = pow(halfNormalDotProd, shininess);
+    colorOut += diffCol * pl.color * lightNormalDotProd + specCol * pl.color * specular;
     
 	return colorOut; 
 }
@@ -187,11 +215,11 @@ vec3 rayColor(Ray r)
         {
             //calculate direct lighting with 3 white point lights:
             {
-                //createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0))
-                //createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0))
-                //createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0))
+                createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0));
+                createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
+                createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
 
-                //for instance: col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
             }
            
             //calculate secondary ray and update throughput
