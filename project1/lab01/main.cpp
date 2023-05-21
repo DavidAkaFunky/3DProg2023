@@ -580,7 +580,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 	Object* shortest_hit_object = nullptr;
 	Vector hit_point;
 	bool skybox_flg = scene->GetSkyBoxFlg();
-	bool Accel_Struct = scene->GetAccelStruct();
 	bool hit = false;
 
 	if (Accel_Struct == NONE) { //no acceleration; your code here}
@@ -612,7 +611,6 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		return colour;
 	}
 		
-
 	Material* material = shortest_hit_object->GetMaterial();
 
 	Vector rev_ray_dir = ray.direction * (-1);
@@ -775,6 +773,7 @@ void renderScene()
 
 			if (aperture <= 0) { // No depth of field
 				if (sqrt_spp == 0) { // No anti-aliasing => Only one pixel sample!
+
 					pixel_sample.x = x + 0.5f;
 					pixel_sample.y = y + 0.5f;
 
@@ -968,6 +967,7 @@ void init_scene(void)
 		{
 			objs.push_back(scene->getObject(o));
 		}
+
 		bvh_ptr->Build(objs);
 		printf("BVH built.\n\n");
 	}
