@@ -770,6 +770,8 @@ void renderScene()
 		{
 			Color color = Color();
 
+			//printf("%d %d\n", y, x);
+
 			if (aperture <= 0) { // No depth of field
 				if (sqrt_spp == 0) { // No anti-aliasing => Only one pixel sample!
 

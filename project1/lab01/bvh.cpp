@@ -184,8 +184,8 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 
 			for (int i = base_index; i < base_index + size; i++) {
 				bool inter = objects[i]->intercepts(ray, t);
-				if (inter)
-					//printf("true %f\n", t);
+				/*if (inter)
+					printf("true %f\n", t);*/
 
 				if (inter && t > 0 && t < *t_ret) {
 					*t_ret = t;
@@ -200,27 +200,22 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 			BVHNode* child1 = nodes[current_node->getIndex()];
 			BVHNode* child2 = nodes[current_node->getIndex() + 1];
 
-			/*if (child1->isLeaf())
-				printf("Child1 -- %d %d\n", child1->getIndex(), child1->getIndex() + child1->getNObjs());
-			
-			if (child2->isLeaf())
-				printf("Child2 --%d %d\n", child2->getIndex(), child2->getIndex() + child2->getNObjs());*/
+			bool c1 = child1->getAABB().intercepts(ray, t1);// Test node’s children
+			bool c2 = child2->getAABB().intercepts(ray, t2);// Test node’s children
 
-			bool c1 = child1->getAABB().intercepts(ray, t1);//findIntersection(ray, child1, &t1); // Test node’s children
-			bool c2 = child2->getAABB().intercepts(ray, t2);//findIntersection(ray, child2, &t2); // Test node’s children
+			if (child1->getAABB().isInside(ray.origin)) t1 = 0;
+			if (child2->getAABB().isInside(ray.origin)) t2 = 0;
 
 			StackItem* s = nullptr;
 
 			if (c1 && c2) {
-				if (t1 > t2) {
+				if (t2 < t1) {
 					//printf("Case1\n");
-					//*t_ret = t2;
 					current_node = child2;
 					s = new StackItem(child1, t1);
 				}
 				else {
 					//printf("Case2\n");
-					//*t_ret = t1;
 					current_node = child1;
 					s = new StackItem(child2, t2);
 				}
@@ -230,13 +225,11 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 			}
 			else if (c1) {
 				//printf("Case3\n");
-				//*t_ret = t1;
 				current_node = child1;
 				continue;
 			}
 			else if (c2) {
 				//printf("Case4\n");
-				//*t_ret = t2;
 				current_node = child2;
 				continue;
 			}
@@ -305,8 +298,8 @@ bool BVH::findIntersection(Ray& ray, BVHNode* current_node) {
 			BVHNode* child1 = nodes[current_node->getIndex()];
 			BVHNode* child2 = nodes[current_node->getIndex() + 1];
 
-			bool c1 = child1->getAABB().intercepts(ray, t1);//findIntersection(ray, child1, &t1); // Test node’s children
-			bool c2 = child2->getAABB().intercepts(ray, t2);//findIntersection(ray, child2, &t2); // Test node’s children
+			bool c1 = child1->getAABB().intercepts(ray, t1);// Test node’s children
+			bool c2 = child2->getAABB().intercepts(ray, t2);// Test node’s children
 
 			StackItem* s = nullptr;
 
@@ -326,21 +319,6 @@ bool BVH::findIntersection(Ray& ray, BVHNode* current_node) {
 				current_node = child2;
 				continue;
 			}
-
-			/*Object* c1 = findIntersection(ray, child1, &t1); // Test node’s children
-			Object* c2 = findIntersection(ray, child2, &t2); // Test node’s children
-
-			StackItem* s = nullptr;
-			if (t1 < FLT_MAX && t2 < FLT_MAX) {
-				current_node = child1;
-				s = new StackItem(child2, t2);
-			}
-			else if (t1 < FLT_MAX) {
-				current_node = child1;
-			}
-			else if (t2 < FLT_MAX) {
-				current_node = child2;
-			}*/
 		}
 
 		//Get from stack
