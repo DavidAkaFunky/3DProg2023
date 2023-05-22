@@ -63,7 +63,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 
     // INSIDE GLASS SPHERE
     if(hit_sphere(
-        createSphere(vec3(0.0, 1.0, 0.0), -0.95),
+        createSphere(vec3(0.0, 1.0, 0.0), -0.45),
         r,
         tmin,
         rec.t,
@@ -167,66 +167,35 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
     return hit;
 }
 
-vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
-    HitRecord dummy;
-
-    vec3 lightDir = normalize(pl.pos - rec.pos);
-    Ray shadowRay = createRay(rec.pos + epsilon * rec.normal, lightDir);
-    if (hit_world(shadowRay, 0.001, 10000.0, dummy))
-        return vec3(0.0, 0.0, 0.0);
-
-    Material material = rec.material;
-
-    vec3 diffColor = vec3(0.0, 0.0, 0.0);
-    float lightNormalDotProd = dot(lightDir, rec.normal);
-    if (lightNormalDotProd > 0.0) {
-        diffColor += material.albedo * lightNormalDotProd;
-    }
-
-    vec3 specCol = material.specColor;
-    if (specCol != vec3(0.0, 0.0, 0.0)) {
-        float shininess = 4.0/(pow(material.roughness, 4.0) + epsilon) - 2.0;
-        vec3 revViewDir = -r.d;
-        vec3 halfwayVec = normalize(revViewDir + lightDir);
-        float halfNormalDotProd = dot(halfwayVec, rec.normal);
-
-        if (halfNormalDotProd > 0.0) {
-            specCol *= pow(halfNormalDotProd, shininess);
-        }
-    }
-
-    return pl.color * (diffColor + specCol);
-}
-
-/*vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
-    vec3 colorOut = vec3(0.0, 0.0, 0.0);
+vec3 directLighting(pointLight pl, Ray r, HitRecord rec){
     HitRecord dummy;
 
     vec3 lightDir = normalize(pl.pos - rec.pos);
     Ray shadowRay = createRay(rec.pos, lightDir);
     if (hit_world(shadowRay, 0.001, 10000.0, dummy))
-        return colorOut;
+        return vec3(0.0);
 
     Material material = rec.material;
+
+    vec3 diffColor = vec3(0.0);
     float lightNormalDotProd = dot(lightDir, rec.normal);
-    if (lightNormalDotProd <= 0.0) {
-        colorOut += material.albedo * pl.color * lightNormalDotProd;
+    if (lightNormalDotProd > 0.0) {
+        diffColor = material.albedo * lightNormalDotProd;
     }
 
-    vec3 specCol = material.specColor;
-    if (specCol != vec3(0.0)) {
-        float shininess = 4.0/(pow(material.roughness, 4.0) + epsilon) - 2.0;
-        vec3 revViewDir = normalize(rec.pos - r.o);
-        vec3 halfwayVec = normalize(revViewDir + lightDir);
-        float halfNormalDotProd = dot(halfwayVec, rec.normal);
+    vec3 specCol = vec3(0.0);
+    float shininess = 4.0/(pow(material.roughness, 4.0) + epsilon) - 2.0;
+    vec3 revViewDir = -r.d;
+    vec3 halfwayVec = normalize(revViewDir + lightDir);
+    float halfNormalDotProd = dot(halfwayVec, rec.normal);
 
-        if (halfNormalDotProd <= 0.0) {
-
-        }
+    if (halfNormalDotProd > 0.0) {
+        //specCol = vec3(1.0);
+        specCol = material.specColor * pow(halfNormalDotProd, shininess);
     }
-    
-	return colorOut; 
-}*/
+
+    return pl.color * (diffColor + specCol);
+}
 
 #define MAX_BOUNCES 10
 
@@ -245,7 +214,7 @@ vec3 rayColor(Ray r)
                 createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
                 createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
 
-                col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                col += directLighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
             }
            
             //calculate secondary ray and update throughput
