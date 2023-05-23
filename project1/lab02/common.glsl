@@ -238,14 +238,13 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 
     if(rec.material.type == MT_METAL)
     {
-        vec3 reflected = reflect(rIn.d, reflNormal);
+        vec3 reflected = reflect(-rIn.d, reflNormal);
         rScattered = createRay(rec.pos + epsilon * reflNormal, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)));
         atten = rec.material.specColor;
         return true;
     }
     if(rec.material.type == MT_DIELECTRIC)
     {
-        atten = vec3(1.0);
         float niOverNt;
         
         if(dot(rIn.d, rec.normal) > 0.0) //hit inside
@@ -256,6 +255,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         else
         {
             niOverNt = 1.0 / rec.material.refIdx;
+            atten = vec3(1.0);
         }
 
         float cosine = dot(-rIn.d, reflNormal); 
@@ -274,9 +274,9 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
             reflectProb = schlick(cosine, rec.material.refIdx);  
 
         if(hash1(gSeed) < reflectProb)  //Reflection
-            rScattered = createRay(rec.pos + epsilon * reflNormal, reflect(rIn.d, reflNormal));
+            rScattered = createRay(rec.pos + epsilon * reflNormal, reflect(-rIn.d, reflNormal));
         else  //Refraction
-        rScattered = createRay(rec.pos - epsilon * reflNormal, refract(rIn.d, -reflNormal, niOverNt));
+            rScattered = createRay(rec.pos - epsilon * reflNormal, refract(-rIn.d, reflNormal, niOverNt));
 
         return true;
     }
