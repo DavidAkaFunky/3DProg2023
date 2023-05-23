@@ -51,78 +51,70 @@ void BVH::Build(vector<Object *> &objs) {
 
 void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 
-	//printf("Start left %d / right %d\n", left_index, right_index);
-
 	if (right_index - left_index <= Threshold) {
 		node->makeLeaf(left_index, right_index - left_index);
-		
-		//printf("Leaf %d %d\n", left_index, right_index);
 		return;
 	}
 
-	//printf("HERE1\n");
+	float min_x = FLT_MAX, min_y = FLT_MAX, min_z = FLT_MAX;
+	float max_x = - FLT_MAX, max_y = - FLT_MAX, max_z = - FLT_MAX;
 
-	float range_x = 0, range_y = 0, range_z = 0;
-	float mid_point = 0;
+	for (int i = left_index; i < right_index; i++) {
+		Vector centroid = objects.at(i)->getCentroid();
+		min_x = min(min_x, centroid.x);
+		min_y = min(min_y, centroid.y);
+		min_z = min(min_z, centroid.z);
+
+		max_x = max(max_x, centroid.x);
+		max_y = max(max_y, centroid.y);
+		max_z = max(max_z, centroid.z);
+	}
+
+	float axis_min, mid_point;
 	int split_index = left_index;
 
-	//find max Axis Range
-
-	AABB worldbb = node->getAABB();
-	range_x = worldbb.max.x - worldbb.min.x;
-	range_y = worldbb.max.y - worldbb.min.y;
-	range_z = worldbb.max.z - worldbb.min.z;
-
-	//printf("start ranges %f %f %f\n", range_x, range_y, range_z);
+	float range_x = max_x - min_x;
+	float range_y = max_y - min_y;
+	float range_z = max_z - min_z;
 
 	if (range_x >= range_y) {
 		mid_point = range_x;
 		max_axis = 0;
+		axis_min = min_x;
 	}
 	else {
 		mid_point = range_y;
 		max_axis = 1;
+		axis_min = min_y;
 	}
 
 	if (range_z > mid_point) {
 		mid_point = range_z;
 		max_axis = 2;
+		axis_min = min_z;
 	}
 
-	mid_point /= 2.0;
-	mid_point += worldbb.min.getAxisValue(max_axis);
-
-	//printf("mid %f\n", mid_point);
+	mid_point = mid_point / 2.0 + axis_min;
 
 	Comparator cmp = Comparator();
 	cmp.dimension = max_axis;
 
-	//Sort objects by maxAxis
+	// Sort objects by maxAxis
 	std::sort(objects.begin() + left_index, objects.begin() + right_index, cmp);
 
-	//printf("HERE2\n");
-
-	//find split index
+	// Find split index
 	for (int i = left_index; i < right_index; i++) {
-		//printf("%f ", objects.at(i)->GetBoundingBox().centroid().getAxisValue(max_axis));
-		if (objects.at(i)->GetBoundingBox().centroid().getAxisValue(max_axis) >= mid_point) {
+		if (objects.at(i)->getCentroid().getAxisValue(max_axis) > mid_point) {
 			split_index = i;
 			break;
 		}
 	}
 
-	//printf("\n");
-
-	//printf("Start split %d\n", split_index);
-
 	//in case the mid point splitting doesnt work(left_index -> ), use median
-	if (split_index == left_index) {
-		
+	if (split_index == left_index || split_index == right_index - 1) {	
 		int size = (right_index - left_index);
 		split_index = left_index + size / 2;
 	}
-
-	//printf("split %d\n", split_index);
 
 	//Bounding boxes for each new node
 	AABB left_box = AABB(Vector(FLT_MAX, FLT_MAX, FLT_MAX), Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX));
@@ -138,14 +130,6 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		right_box.extend(obj_box);
 	}
 
-	/*left_box.min.x -= EPSILON; left_box.min.y -= EPSILON; left_box.min.z -= EPSILON;
-	left_box.max.x += EPSILON; left_box.max.y += EPSILON; left_box.max.z += EPSILON;
-
-	right_box.min.x -= EPSILON; right_box.min.y -= EPSILON; right_box.min.z -= EPSILON;
-	right_box.max.x += EPSILON; right_box.max.y += EPSILON; right_box.max.z += EPSILON;*/
-
-	//printf("HERE3\n");
-
 	// Child nodes
 	BVHNode* left_child = new BVHNode();
 	BVHNode* right_child = new BVHNode();
@@ -160,12 +144,8 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	nodes.push_back(left_child);
 	nodes.push_back(right_child);
 
-	//printf("left %d / right %d\n", left_index, split_index);
-
 	build_recursive(left_index, split_index, left_child);
-	//printf("HERE5-----\n");
 	build_recursive(split_index, right_index, right_child);
-	//printf("HERE6------\n");
 
 	//right_index, left_index and split_index refer to the indices in the objects vector
 	// do not confuse with left_node_index and right_node_index which refer to indices in the nodes vector. 
@@ -208,8 +188,8 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 			BVHNode* child1 = nodes[current_node->getIndex()];
 			BVHNode* child2 = nodes[current_node->getIndex() + 1];
 
-			bool c1 = child1->getAABB().intercepts(ray, t1);// Test node’s children
-			bool c2 = child2->getAABB().intercepts(ray, t2);// Test node’s children
+			bool c1 = child1->getAABB().intercepts(ray, t1);// Test nodeï¿½s children
+			bool c2 = child2->getAABB().intercepts(ray, t2);// Test nodeï¿½s children
 
 			if (child1->getAABB().isInside(ray.origin)) t1 = 0;
 			if (child2->getAABB().isInside(ray.origin)) t2 = 0;
@@ -306,8 +286,8 @@ bool BVH::findIntersection(Ray& ray, BVHNode* current_node) {
 			BVHNode* child1 = nodes[current_node->getIndex()];
 			BVHNode* child2 = nodes[current_node->getIndex() + 1];
 
-			bool c1 = child1->getAABB().intercepts(ray, t1);// Test node’s children
-			bool c2 = child2->getAABB().intercepts(ray, t2);// Test node’s children
+			bool c1 = child1->getAABB().intercepts(ray, t1);// Test nodeï¿½s children
+			bool c2 = child2->getAABB().intercepts(ray, t2);// Test nodeï¿½s children
 
 			StackItem* s = nullptr;
 
