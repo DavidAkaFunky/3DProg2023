@@ -204,17 +204,18 @@ vec3 rayColor(Ray r)
     HitRecord rec;
     vec3 col = vec3(0.0);
     vec3 throughput = vec3(1.0f, 1.0f, 1.0f);
+    pointLight lights[3];
+    lights[0] = createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0));
+    lights[1] = createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
+    lights[2] = createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
     for(int i = 0; i < MAX_BOUNCES; ++i)
     {
         if(hit_world(r, 0.001, 10000.0, rec))
         {
             //calculate direct lighting with 3 white point lights:
             {
-                createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0));
-                createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
-                createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
-
-                col += directLighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                for (int i = 0; i < lights.length(); ++i)
+                    col += directLighting(lights[i], r, rec) * throughput;
             }
            
             //calculate secondary ray and update throughput

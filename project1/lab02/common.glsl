@@ -234,23 +234,24 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         return true;
     }
     
-    vec3 reflNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
+    vec3 shadingNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
 
     if(rec.material.type == MT_METAL)
-    {
-        vec3 reflected = reflect(-rIn.d, reflNormal);
-        rScattered = createRay(rec.pos + epsilon * reflNormal, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)));
+    {   
+        vec3 reflected = reflect(rIn.d, shadingNormal);
+        rScattered = createRay(rec.pos + epsilon * shadingNormal, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)));
         atten = rec.material.specColor;
         return true;
     }
+
     if(rec.material.type == MT_DIELECTRIC)
     {
         float niOverNt;
         
-        if(dot(rIn.d, rec.normal) > 0.0) //hit inside
+        if(dot(rIn.d, rec.normal) < 0.0) //hit inside
         {
             niOverNt = rec.material.refIdx;
-            atten = exp(-rec.material.refractColor * rec.t);
+            atten = exp(-rec.material.refractColor * rec.t); // Beer's law
         }
         else
         {
@@ -258,9 +259,9 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
             atten = vec3(1.0);
         }
 
-        float cosine = dot(-rIn.d, reflNormal); 
+        float cosine = max(dot(rIn.d, shadingNormal), 0.0); 
 
-        vec3 tangentVec = rIn.d + reflNormal * cosine;
+        vec3 tangentVec = rIn.d + shadingNormal * cosine;
 
         float sinThetaI = length(tangentVec);
 
@@ -268,18 +269,21 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 
         float reflectProb;
 
-        if (sinThetaI > 1.0) 
-            reflectProb = 1.0;  //total internal reflection
+        if (sinThetaI > 1.0) {
+            atten = rec.material.specColor; // TODO: Check if needed
+            reflectProb = 1.0;  // Total internal reflection
+        }
         else
             reflectProb = schlick(cosine, rec.material.refIdx);  
 
         if(hash1(gSeed) < reflectProb)  //Reflection
-            rScattered = createRay(rec.pos + epsilon * reflNormal, reflect(-rIn.d, reflNormal));
+            rScattered = createRay(rec.pos + epsilon * shadingNormal, reflect(rIn.d, shadingNormal));
         else  //Refraction
-            rScattered = createRay(rec.pos - epsilon * reflNormal, refract(-rIn.d, reflNormal, niOverNt));
+            rScattered = createRay(rec.pos - epsilon * shadingNormal, refract(rIn.d, shadingNormal, niOverNt));
 
         return true;
     }
+    
     return false;
 }
 
@@ -300,7 +304,7 @@ bool hit_triangle(Triangle triangle, Ray r, float tmin, float tmax, out HitRecor
     if (vd == 0.0) return false;
 
     float d = - dot(triangle.normal, triangle.a);
-    float t = -(dot(triangle.normal, r.o) + d) / vd;
+    float t = - (dot(triangle.normal, r.o) + d) / vd;
 
     if (t < 0.0 || t < tmin || t > tmax) return false;
 
