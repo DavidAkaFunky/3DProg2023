@@ -64,7 +64,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 
 	float range_x = 0, range_y = 0, range_z = 0;
 	float mid_point = 0;
-	int split_index = 0;
+	int split_index = left_index;
 
 	//find max Axis Range
 
@@ -75,7 +75,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 
 	//printf("start ranges %f %f %f\n", range_x, range_y, range_z);
 
-	if (range_x > range_y) {
+	if (range_x >= range_y) {
 		mid_point = range_x;
 		max_axis = 0;
 	}
@@ -90,6 +90,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	}
 
 	mid_point /= 2.0;
+	mid_point += worldbb.min.getAxisValue(max_axis);
 
 	//printf("mid %f\n", mid_point);
 
@@ -104,7 +105,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	//find split index
 	for (int i = left_index; i < right_index; i++) {
 		//printf("%f ", objects.at(i)->GetBoundingBox().centroid().getAxisValue(max_axis));
-		if (objects.at(i)->GetBoundingBox().centroid().getAxisValue(max_axis) > mid_point) {
+		if (objects.at(i)->GetBoundingBox().centroid().getAxisValue(max_axis) >= mid_point) {
 			split_index = i;
 			break;
 		}
@@ -115,7 +116,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	//printf("Start split %d\n", split_index);
 
 	//in case the mid point splitting doesnt work(left_index -> ), use median
-	if (split_index == left_index || split_index == 0) {
+	if (split_index == left_index) {
 		
 		int size = (right_index - left_index);
 		split_index = left_index + size / 2;
@@ -136,6 +137,12 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		AABB obj_box = objects.at(i)->GetBoundingBox();
 		right_box.extend(obj_box);
 	}
+
+	/*left_box.min.x -= EPSILON; left_box.min.y -= EPSILON; left_box.min.z -= EPSILON;
+	left_box.max.x += EPSILON; left_box.max.y += EPSILON; left_box.max.z += EPSILON;
+
+	right_box.min.x -= EPSILON; right_box.min.y -= EPSILON; right_box.min.z -= EPSILON;
+	right_box.max.x += EPSILON; right_box.max.y += EPSILON; right_box.max.z += EPSILON;*/
 
 	//printf("HERE3\n");
 
@@ -161,7 +168,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	//printf("HERE6------\n");
 
 	//right_index, left_index and split_index refer to the indices in the objects vector
-	// do not confuse with left_nodde_index and right_node_index which refer to indices in the nodes vector. 
+	// do not confuse with left_node_index and right_node_index which refer to indices in the nodes vector. 
 	// node.index can have a index of objects vector or a index of nodes vector
 			
 }
@@ -175,8 +182,9 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 		return nullptr;
 	}
 
+	//printf("0\n");
 	while (true) {
-
+		
 		if (current_node->isLeaf()) { //find the closest hit with the objects of the node
 			//printf("Leaf %d %d\n", current_node->getIndex(), current_node->getIndex() + current_node->getNObjs());
 
@@ -210,12 +218,12 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 
 			if (c1 && c2) {
 				if (t2 < t1) {
-					//printf("Case1\n");
+					//printf("%d\n", current_node->getIndex()+1);
 					current_node = child2;
 					s = new StackItem(child1, t1);
 				}
 				else {
-					//printf("Case2\n");
+					//printf("%d\n", current_node->getIndex());
 					current_node = child1;
 					s = new StackItem(child2, t2);
 				}
@@ -224,12 +232,12 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 				continue;
 			}
 			else if (c1) {
-				//printf("Case3\n");
+				//printf("%d\n", current_node->getIndex());
 				current_node = child1;
 				continue;
 			}
 			else if (c2) {
-				//printf("Case4\n");
+				//printf("%d\n", current_node->getIndex() + 1);
 				current_node = child2;
 				continue;
 			}
@@ -246,7 +254,7 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 				StackItem s = hit_stack.top();
 				hit_stack.pop();
 				
-				//printf("-------------------Pop! %f %f\n", s.t, *t_ret);
+				//printf("-------------------Pop!\n");
 				if (s.t < *t_ret) {
 					current_node = s.ptr;
 					break;
