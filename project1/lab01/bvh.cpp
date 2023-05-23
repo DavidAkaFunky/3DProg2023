@@ -59,42 +59,32 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	float min_x = FLT_MAX, min_y = FLT_MAX, min_z = FLT_MAX;
 	float max_x = - FLT_MAX, max_y = - FLT_MAX, max_z = - FLT_MAX;
 
-	for (int i = left_index; i < right_index; i++) {
-		Vector centroid = objects.at(i)->getCentroid();
-		min_x = min(min_x, centroid.x);
-		min_y = min(min_y, centroid.y);
-		min_z = min(min_z, centroid.z);
-
-		max_x = max(max_x, centroid.x);
-		max_y = max(max_y, centroid.y);
-		max_z = max(max_z, centroid.z);
-	}
-
-	float axis_min, mid_point;
 	int split_index = left_index;
 
-	float range_x = max_x - min_x;
-	float range_y = max_y - min_y;
-	float range_z = max_z - min_z;
+	AABB worldbb = node->getAABB();
+	float range_x = worldbb.max.x - worldbb.min.x;
+	float range_y = worldbb.max.y - worldbb.min.y;
+	float range_z = worldbb.max.z - worldbb.min.z;
+	float mid_point;
+
+	//printf("start ranges %f %f %f\n", range_x, range_y, range_z);
 
 	if (range_x >= range_y) {
 		mid_point = range_x;
 		max_axis = 0;
-		axis_min = min_x;
 	}
 	else {
 		mid_point = range_y;
 		max_axis = 1;
-		axis_min = min_y;
 	}
 
 	if (range_z > mid_point) {
 		mid_point = range_z;
 		max_axis = 2;
-		axis_min = min_z;
 	}
 
-	mid_point = mid_point / 2.0 + axis_min;
+	mid_point /= 2.0;
+	mid_point += worldbb.min.getAxisValue(max_axis);
 
 	Comparator cmp = Comparator();
 	cmp.dimension = max_axis;
