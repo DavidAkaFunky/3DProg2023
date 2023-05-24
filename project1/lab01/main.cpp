@@ -494,7 +494,9 @@ Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir
 	if (Accel_Struct == GRID_ACC) {
 		in_shadow = grid_ptr->Traverse(shadow_ray);
 	}
-
+	else if(Accel_Struct == BVH_ACC) {
+		in_shadow = bvh_ptr->Traverse(shadow_ray);
+	}
 	else {
 		for (int j = 0; j < scene->getNumObjects(); j++) {
 			if (scene->getObject(j)->intercepts(shadow_ray, hit_dist)) {

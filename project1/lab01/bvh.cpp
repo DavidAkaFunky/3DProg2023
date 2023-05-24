@@ -92,20 +92,21 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	// Sort objects by maxAxis
 	std::sort(objects.begin() + left_index, objects.begin() + right_index, cmp);
 
-	// Find split index
-	for (int i = left_index; i < right_index; i++) {
-		if (objects.at(i)->getCentroid().getAxisValue(max_axis) > mid_point) {
-			split_index = i;
-			break;
+	//in case the mid point splitting doesnt work(left_index -> ), use median
+	if (objects.at(left_index)->getCentroid().getAxisValue(max_axis) > mid_point ||
+		objects.at(right_index - 1)->getCentroid().getAxisValue(max_axis) <= mid_point) {
+		split_index = (left_index + right_index) / 2;
+	}
+
+	else {
+		// Find split index
+		for (split_index = left_index; split_index < right_index; split_index++) {
+			if (objects.at(split_index)->getCentroid().getAxisValue(max_axis) > mid_point) {
+				break;
+			}
 		}
 	}
-
-	//in case the mid point splitting doesnt work(left_index -> ), use median
-	if (split_index == left_index || split_index == right_index - 1) {	
-		int size = (right_index - left_index);
-		split_index = left_index + size / 2;
-	}
-
+	
 	//Bounding boxes for each new node
 	AABB left_box = AABB(Vector(FLT_MAX, FLT_MAX, FLT_MAX), Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX));
 	AABB right_box = AABB(Vector(FLT_MAX, FLT_MAX, FLT_MAX), Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX));
@@ -165,7 +166,7 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 				/*if (inter)
 					printf("true %f\n", t);*/
 
-				if (inter && t > 0 && t < *t_ret) {
+				if (inter && t < *t_ret) {
 					*t_ret = t;
 					closest_obj = objects[i];
 					//printf("Object hit %d\n", i);
