@@ -227,59 +227,55 @@ float schlick(float cosine, float refIdx)
 
 bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 {
+    vec3 shadingNormal = (dot(-rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
+    vec3 bias = epsilon * shadingNormal;
+
     if(rec.material.type == MT_DIFFUSE)
     {
-        rScattered = createRay(rec.pos + epsilon * rec.normal, randomUnitVector(gSeed));
-        atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
+        rScattered = createRay(rec.pos + epsilon * shadingNormal, normalize(shadingNormal + randomUnitVector(gSeed)), rIn.t);
+        atten = rec.material.albedo * max(dot(rScattered.d, shadingNormal), 0.0) / pi;
         return true;
     }
     
-    vec3 shadingNormal = (dot(rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
-
     if(rec.material.type == MT_METAL)
     {   
         vec3 reflected = reflect(rIn.d, shadingNormal);
-        rScattered = createRay(rec.pos + epsilon * shadingNormal, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)));
+        rScattered = createRay(rec.pos + bias, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)), rIn.t);
         atten = rec.material.specColor;
         return true;
     }
 
     if(rec.material.type == MT_DIELECTRIC)
-    {
+    {   
+        float cosThetaI = max(dot(-rIn.d, shadingNormal), 0.0); 
+        vec3 tangentVec = rIn.d + shadingNormal * cosThetaI;
         float niOverNt;
-        
-        if(dot(rIn.d, rec.normal) < 0.0) //hit inside
+
+        if(dot(-rIn.d, rec.normal) < 0.0) //hit inside
         {
             niOverNt = rec.material.refIdx;
             atten = exp(-rec.material.refractColor * rec.t); // Beer's law
         }
-        else
+        else // hit outside
         {
             niOverNt = 1.0 / rec.material.refIdx;
-            atten = vec3(1.0);
+            atten = vec3(1.0);   
         }
 
-        float cosine = max(dot(rIn.d, shadingNormal), 0.0); 
-
-        vec3 tangentVec = rIn.d + shadingNormal * cosine;
-
-        float sinThetaI = length(tangentVec);
-
-        tangentVec = normalize(tangentVec);
-
+        float sinThetaT = length(tangentVec) * niOverNt;
         float reflectProb;
 
-        if (sinThetaI > 1.0) {
-            atten = rec.material.specColor; // TODO: Check if needed
+        if (sinThetaT > 1.0) {
+            atten = rec.material.specColor;
             reflectProb = 1.0;  // Total internal reflection
         }
         else
-            reflectProb = schlick(cosine, rec.material.refIdx);  
+            reflectProb = schlick(sqrt(1.0 - pow(sinThetaT, 2.0)), rec.material.refIdx);  
 
         if(hash1(gSeed) < reflectProb)  //Reflection
-            rScattered = createRay(rec.pos + epsilon * shadingNormal, reflect(rIn.d, shadingNormal));
+            rScattered = createRay(rec.pos + bias, reflect(rIn.d, shadingNormal), rIn.t);
         else  //Refraction
-            rScattered = createRay(rec.pos - epsilon * shadingNormal, refract(rIn.d, shadingNormal, niOverNt));
+            rScattered = createRay(rec.pos - bias, refract(rIn.d, shadingNormal, niOverNt), rIn.t);
 
         return true;
     }
@@ -394,7 +390,7 @@ bool hit_genericSphere(vec3 center, float radius, float sqRadius, Ray r, float t
     if (t < tmax && t > tmin) {
         rec.t = t;
         rec.pos = pointOnRay(r, t);
-        rec.normal = (rec.pos - center) / radius;
+        rec.normal = normalize(rec.pos - center);
         return true;
     }
     return false;

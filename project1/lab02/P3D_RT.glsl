@@ -61,7 +61,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.0);
     }
 
-    // INSIDE GLASS SPHERE
+    // INNER GLASS SPHERE
     if(hit_sphere(
         createSphere(vec3(0.0, 1.0, 0.0), -0.45),
         r,
@@ -171,8 +171,8 @@ vec3 directLighting(pointLight pl, Ray r, HitRecord rec){
     HitRecord dummy;
 
     vec3 lightDir = normalize(pl.pos - rec.pos);
-    Ray shadowRay = createRay(rec.pos, lightDir);
-    if (hit_world(shadowRay, 0.001, 10000.0, dummy))
+    Ray shadowRay = createRay(rec.pos + epsilon * rec.normal, lightDir);
+    if (hit_world(shadowRay, 0.0, length(pl.pos - rec.pos), dummy))
         return vec3(0.0);
 
     Material material = rec.material;
@@ -185,8 +185,7 @@ vec3 directLighting(pointLight pl, Ray r, HitRecord rec){
 
     vec3 specCol = vec3(0.0);
     float shininess = 4.0/(pow(material.roughness, 4.0) + epsilon) - 2.0;
-    vec3 revViewDir = -r.d;
-    vec3 halfwayVec = normalize(revViewDir + lightDir);
+    vec3 halfwayVec = normalize(lightDir - r.d);
     float halfNormalDotProd = dot(halfwayVec, rec.normal);
 
     if (halfNormalDotProd > 0.0) {
@@ -210,7 +209,7 @@ vec3 rayColor(Ray r)
     lights[2] = createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
     for(int i = 0; i < MAX_BOUNCES; ++i)
     {
-        if(hit_world(r, 0.001, 10000.0, rec))
+        if(hit_world(r, 0.0, 10000.0, rec))
         {
             //calculate direct lighting with 3 white point lights:
             {
