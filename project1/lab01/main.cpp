@@ -27,7 +27,7 @@
 
 bool drawModeEnabled = false; // Enable OpenGL drawing.
 
-bool P3F_scene = true; // choose between P3F scene or a built-in random scene
+bool P3F_scene = false; // choose between P3F scene or a built-in random scene
 
 //bool jittering = true; // Enable jittering
 
@@ -494,7 +494,7 @@ Color getDiffuseNSpecular(Ray shadow_ray, Material* material, Vector hit_ray_dir
 	if (Accel_Struct == GRID_ACC) {
 		in_shadow = grid_ptr->Traverse(shadow_ray);
 	}
-	else if(Accel_Struct == BVH_ACC) {
+	else if (Accel_Struct == BVH_ACC) {
 		in_shadow = bvh_ptr->Traverse(shadow_ray);
 	}
 	else {
@@ -572,6 +572,40 @@ Color getReflection(Vector normal_vec, float cos_theta_i, Vector rev_ray_dir, Ve
 	refl_colour = material->GetSpecColor() * refl_colour * material->GetReflection();
 	//printf("2: %f, %f, %f\n", refl_colour.r(), refl_colour.g(), refl_colour.b());
 	return refl_colour;
+}
+
+Color getRefraction(Vector hit_point, Vector normal_vec, Vector tangent_vec, float sin_theta_t, 
+	float cos_theta_t, Material* material, int depth, float ior_t, float Kr) {
+
+	Vector refr_hit_point = hit_point - normal_vec * EPSILON;
+	Vector refr_ray_dir = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
+	float roughness = material->GetRoughness();
+	int spp = scene->GetSamplesPerPixel();
+	Color colour;
+
+	if (roughness > 0) { // Fuzzy refractions
+		// Anti-aliasing already shoots multiple rays,
+		// so we only need to shoot more than one here
+		// if anti-aliasing is deactivated
+		int sqrt_num_samples = (spp == 0) ? 2 : 1;
+		Vector mod_refr_ray_dir;
+
+		for (int p = 0; p < sqrt_num_samples; p++) {
+			for (int q = 0; q < sqrt_num_samples; q++) {
+				mod_refr_ray_dir = (refr_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
+
+				Ray refr_ray(refr_hit_point, mod_refr_ray_dir);
+
+				colour += rayTracing(refr_ray, depth + 1, ior_t);
+			}
+		}
+
+		return colour * (1 - Kr) * (1.0 / pow(sqrt_num_samples, 2)); // Average the added colours
+	}
+
+	Ray refr_ray(refr_hit_point, refr_ray_dir);
+	Color refr_colour = rayTracing(refr_ray, depth + 1, ior_t);
+	return refr_colour * (1 - Kr);
 }
 
 Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medium 1 where the ray is travelling
@@ -735,14 +769,7 @@ Color rayTracing(Ray ray, int depth, float ior_i) // index of refraction of medi
 		colour += material->GetSpecColor() * reflected_colour * Kr;
 	}
 
-	Vector refr_hit_point = hit_point - normal_vec * EPSILON;
-	Vector refr_ray_dir = tangent_vec * sin_theta_t - normal_vec * cos_theta_t;
-	Ray refr_ray(refr_hit_point, refr_ray_dir);
-
-	Color refr_colour = rayTracing(refr_ray, depth + 1, ior_t);
-	colour += refr_colour * (1 - Kr);
-
-	return colour;
+	return colour + getRefraction(hit_point, normal_vec, tangent_vec, sin_theta_t, cos_theta_t, material, depth, ior_t, Kr);
 }
 
 // Render function by primary ray casting from the eye towards the scene's objects

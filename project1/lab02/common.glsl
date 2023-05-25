@@ -115,7 +115,7 @@ Camera createCamera(
     float time1)
 {
     Camera cam;
-    if(aperture == 0.0) cam.focusDist = 1.0; //pinhole camera then focus in on vis plane
+    if (aperture == 0.0) cam.focusDist = 1.0; //pinhole camera then focus in on vis plane
     else cam.focusDist = focusDist;
     vec3 w = eye - at;
     cam.planeDist = length(w);
@@ -230,14 +230,14 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     vec3 shadingNormal = (dot(-rIn.d, rec.normal) > 0.0) ? rec.normal : -rec.normal;
     vec3 bias = epsilon * shadingNormal;
 
-    if(rec.material.type == MT_DIFFUSE)
+    if (rec.material.type == MT_DIFFUSE)
     {
         rScattered = createRay(rec.pos + bias, normalize(shadingNormal + randomUnitVector(gSeed)), rIn.t);
         atten = rec.material.albedo * max(dot(rScattered.d, shadingNormal), 0.0) / pi;
         return true;
     }
     
-    if(rec.material.type == MT_METAL)
+    if (rec.material.type == MT_METAL)
     {   
         vec3 reflected = reflect(rIn.d, shadingNormal);
         rScattered = createRay(rec.pos + bias, normalize(reflected + rec.material.roughness * randomInUnitSphere(gSeed)), rIn.t);
@@ -245,13 +245,13 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         return true;
     }
 
-    if(rec.material.type == MT_DIELECTRIC)
+    if (rec.material.type == MT_DIELECTRIC)
     {   
         float cosThetaI = dot(-rIn.d, shadingNormal); 
         vec3 tangentVec = rIn.d + shadingNormal * cosThetaI;
         float niOverNt, sinThetaT, cosine;
 
-        if(dot(-rIn.d, rec.normal) < 0.0) //hit inside
+        if (dot(-rIn.d, rec.normal) < 0.0) //hit inside
         {
             niOverNt = rec.material.refIdx;
             sinThetaT = length(tangentVec) * niOverNt;
@@ -274,7 +274,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         else
             reflectProb = schlick(cosine, rec.material.refIdx);  
 
-        if(hash1(gSeed) < reflectProb)  //Reflection
+        if (hash1(gSeed) < reflectProb)  //Reflection
             rScattered = createRay(rec.pos + bias, reflect(rIn.d, shadingNormal), rIn.t);
         else  //Refraction
             rScattered = createRay(rec.pos - bias, normalize(refract(rIn.d, shadingNormal, niOverNt) + rec.material.roughness * randomInUnitSphere(gSeed)), rIn.t);
@@ -422,6 +422,27 @@ pointLight createPointLight(vec3 pos, vec3 color)
 {
     pointLight l;
     l.pos = pos;
+    l.color = color;
+    return l;
+}
+
+struct areaLight {
+    int numSamples;
+    vec3 pos[9];
+    vec3 color;
+};
+
+areaLight createAreaLight(vec3 centre, float width, float height, vec3 color) {
+    areaLight l;
+    l.numSamples = 9;
+    int sqrtNumSamples = int(sqrt(float(l.numSamples)));
+    for (int i = 0; i < sqrtNumSamples; i++) {
+        for (int j = 0; j < sqrtNumSamples; j++){
+            float offsetX = hash1(gSeed);
+            float offsetZ = hash1(gSeed);
+            l.pos[i * sqrtNumSamples + j] = vec3(centre.x + (float(i) + offsetX) * width / 4.0, centre.y, centre.z + (float(j) + offsetZ) * height / 4.0);
+        }
+    }
     l.color = color;
     return l;
 }

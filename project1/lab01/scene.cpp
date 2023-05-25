@@ -709,8 +709,8 @@ void Scene::create_random_scene() {
 	this->SetBackgroundColor(Color(0.5, 0.7, 1.0));
 	//this->LoadSkybox("skybox");
 	//this->SetSkyBoxFlg(true);
-	this->SetAccelStruct(GRID_ACC);
-	this->SetSamplesPerPixel(0);
+	this->SetAccelStruct(BVH_ACC);
+	this->SetSamplesPerPixel(16);
 	
 	camera = new Camera(Vector(-5.312192, 4.456562, 11.963158), Vector(0.0, 0.0, 0), Vector(0.0, 1.0, 0.0), 45.0, 0.01, 10000.0, 512, 512, 0, 1.5f);
 	this->SetCamera(camera);
@@ -757,7 +757,7 @@ void Scene::create_random_scene() {
 
 		}
 
-	material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(1.0, 1.0, 1.0), 0.7, 20, 1, 1.5, 0.5);
+	material = new Material(Color(0.0, 0.0, 0.0), 0.0, Color(1.0, 1.0, 1.0), 0.7, 20, 1, 1.5, 0);
 	sphere = new Sphere(Vector(0.0, 1.0, 0.0), 1.0);
 	if (material) sphere->SetMaterial(material);
 	this->addObject((Object*)sphere);
