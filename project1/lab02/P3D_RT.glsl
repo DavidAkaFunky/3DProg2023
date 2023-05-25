@@ -224,14 +224,14 @@ vec3 rayColor(Ray r)
     vec3 throughput = vec3(1.0f, 1.0f, 1.0f);
     
     pointLight pointLights[3];
-    // pointLights[0] = createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0));
-    // pointLights[1] = createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
-    // pointLights[2] = createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
+    pointLights[0] = createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0));
+    pointLights[1] = createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
+    pointLights[2] = createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
 
-    areaLight areaLights[3];
-    areaLights[0] = createAreaLight(vec3(-10.0, 15.0, 0.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
-    areaLights[1] = createAreaLight(vec3(8.0, 15.0, 3.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
-    areaLights[2] = createAreaLight(vec3(1.0, 15.0, -9.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
+    // areaLight areaLights[3];
+    // areaLights[0] = createAreaLight(vec3(-10.0, 15.0, 0.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
+    // areaLights[1] = createAreaLight(vec3(8.0, 15.0, 3.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
+    // areaLights[2] = createAreaLight(vec3(1.0, 15.0, -9.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
 
     for(int i = 0; i < MAX_BOUNCES; ++i)
     {
@@ -241,8 +241,8 @@ vec3 rayColor(Ray r)
             for (int i = 0; i < pointLights.length(); ++i)
                 col += directLighting(pointLights[i], r, rec) * throughput;
 
-            for (int i = 0; i < areaLights.length(); ++i)
-                col += directLighting(areaLights[i], r, rec) * throughput;
+            // for (int i = 0; i < areaLights.length(); ++i)
+            //     col += directLighting(areaLights[i], r, rec) * throughput;
            
             //calculate secondary ray and update throughput
             Ray scatterRay;
