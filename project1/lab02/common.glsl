@@ -153,7 +153,7 @@ Ray getRay(Camera cam, vec2 pixelSample)  //rnd pixelSample viewport coordinates
         cam.n * focalPlaneSample.z
     );
 
-    return createRay(eyeOffset, normalize(rayDirection), time);
+    return createRay(eyeOffset, rayDirection, time);
 }
 
 // MT_ material type
@@ -232,7 +232,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 
     if(rec.material.type == MT_DIFFUSE)
     {
-        rScattered = createRay(rec.pos + epsilon * shadingNormal, normalize(shadingNormal + randomUnitVector(gSeed)), rIn.t);
+        rScattered = createRay(rec.pos + bias, normalize(shadingNormal + randomUnitVector(gSeed)), rIn.t);
         atten = rec.material.albedo * max(dot(rScattered.d, shadingNormal), 0.0) / pi;
         return true;
     }
@@ -247,35 +247,37 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 
     if(rec.material.type == MT_DIELECTRIC)
     {   
-        float cosThetaI = max(dot(-rIn.d, shadingNormal), 0.0); 
+        float cosThetaI = dot(-rIn.d, shadingNormal); 
         vec3 tangentVec = rIn.d + shadingNormal * cosThetaI;
-        float niOverNt;
+        float niOverNt, sinThetaT, cosine;
 
         if(dot(-rIn.d, rec.normal) < 0.0) //hit inside
         {
             niOverNt = rec.material.refIdx;
+            sinThetaT = length(tangentVec) * niOverNt;
             atten = exp(-rec.material.refractColor * rec.t); // Beer's law
+            cosine = sqrt(1.0 - pow(sinThetaT, 2.0));
         }
         else // hit outside
         {
             niOverNt = 1.0 / rec.material.refIdx;
+            sinThetaT = length(tangentVec) * niOverNt;
             atten = vec3(1.0);   
+            cosine = cosThetaI;
         }
 
-        float sinThetaT = length(tangentVec) * niOverNt;
         float reflectProb;
 
         if (sinThetaT > 1.0) {
-            atten = rec.material.specColor;
             reflectProb = 1.0;  // Total internal reflection
         }
         else
-            reflectProb = schlick(sqrt(1.0 - pow(sinThetaT, 2.0)), rec.material.refIdx);  
+            reflectProb = schlick(cosine, rec.material.refIdx);  
 
         if(hash1(gSeed) < reflectProb)  //Reflection
             rScattered = createRay(rec.pos + bias, reflect(rIn.d, shadingNormal), rIn.t);
         else  //Refraction
-            rScattered = createRay(rec.pos - bias, refract(rIn.d, shadingNormal, niOverNt), rIn.t);
+            rScattered = createRay(rec.pos - bias, normalize(refract(rIn.d, shadingNormal, niOverNt) + rec.material.roughness * randomInUnitSphere(gSeed)), rIn.t);
 
         return true;
     }
@@ -390,7 +392,7 @@ bool hit_genericSphere(vec3 center, float radius, float sqRadius, Ray r, float t
     if (t < tmax && t > tmin) {
         rec.t = t;
         rec.pos = pointOnRay(r, t);
-        rec.normal = normalize(rec.pos - center);
+        rec.normal = (rec.pos - center) / radius;
         return true;
     }
     return false;
