@@ -256,7 +256,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
             niOverNt = rec.material.refIdx;
             sinThetaT = length(tangentVec) * niOverNt;
             atten = exp(-rec.material.refractColor * rec.t); // Beer's law
-            cosine = sqrt(1.0 - pow(sinThetaT, 2.0));
+            if (sinThetaT <= 1.0)
+                cosine = sqrt(1.0 - pow(sinThetaT, 2.0));
         }
         else // hit outside
         {
@@ -268,9 +269,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 
         float reflectProb;
 
-        if (sinThetaT > 1.0) {
+        if (sinThetaT > 1.0)
             reflectProb = 1.0;  // Total internal reflection
-        }
         else
             reflectProb = schlick(cosine, rec.material.refIdx);  
 
@@ -392,7 +392,7 @@ bool hit_genericSphere(vec3 center, float radius, float sqRadius, Ray r, float t
     if (t < tmax && t > tmin) {
         rec.t = t;
         rec.pos = pointOnRay(r, t);
-        rec.normal = (rec.pos - center) / radius;
+        rec.normal = normalize((rec.pos - center) / radius);
         return true;
     }
     return false;

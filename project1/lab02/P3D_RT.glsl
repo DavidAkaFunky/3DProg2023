@@ -51,7 +51,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec))
     {
         hit = true;
-        rec.material = createMetalMaterial(vec3(0.7, 0.6, 0.5), 0.0);
+        rec.material = createMetalMaterial(vec3(0.7, 0.6, 0.5), 0.5);
     }
 
     // GLASS SPHERE
@@ -63,7 +63,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec))
     {
         hit = true;
-        rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.0);
+        rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.1);
     }
 
     // INNER GLASS SPHERE
@@ -75,7 +75,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec))
     {
         hit = true;
-        rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.0);
+        rec.material = createDielectricMaterial(vec3(0.0), 1.333, 0.5);
     }
    
     int numxy = 5;
@@ -289,7 +289,7 @@ void main()
     vec3 camUp = vec3(0.0, 1.0, 0.0);
     vec3 camTarget = vec3(0.0, 0.0, -1.0);
     float fovy = 60.0;
-    float aperture = 0.0;
+    float aperture = 10.0;
     float distToFocus = 1.0;
     float time0 = 0.0;
     float time1 = 1.0;
