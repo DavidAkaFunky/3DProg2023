@@ -233,7 +233,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     if (rec.material.type == MT_DIFFUSE)
     {
         rScattered = createRay(rec.pos + bias, normalize(shadingNormal + randomUnitVector(gSeed)), rIn.t);
-        atten = rec.material.albedo * max(dot(rScattered.d, shadingNormal), 0.0) / pi;
+        atten = rec.material.albedo * max(dot(rScattered.d, shadingNormal), 0.0);
         return true;
     }
     
