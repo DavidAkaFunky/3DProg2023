@@ -12,6 +12,8 @@ const float c_minCameraAngle = 0.01;
 const float c_maxCameraAngle = 3.14 - 0.01;
 const float c_cameraDistance = 20.0;
 
+const bool softShadows = false;
+
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
     bool hit = false;
@@ -186,10 +188,12 @@ vec3 directLighting(vec3 pos, vec3 color, Ray r, HitRecord rec){
 
     vec3 diffColor = vec3(0.0);
     float lightNormalDotProd = dot(lightDir, shadingNormal);
-    if (lightNormalDotProd > 0.0) {
-        diffColor = material.albedo * lightNormalDotProd;
+    if (lightNormalDotProd <= 0.0) {
+        return vec3(0.0);
     }
 
+    diffColor = material.albedo * lightNormalDotProd;
+    
     vec3 specCol = vec3(0.0);
     float shininess = 4.0/(pow(material.roughness, 4.0) + epsilon) - 2.0;
     vec3 halfwayVec = normalize(lightDir - r.d);
@@ -223,26 +227,32 @@ vec3 rayColor(Ray r)
     vec3 col = vec3(0.0);
     vec3 throughput = vec3(1.0f, 1.0f, 1.0f);
     
+    areaLight areaLights[3];
     pointLight pointLights[3];
-    pointLights[0] = createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0));
-    pointLights[1] = createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
-    pointLights[2] = createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
 
-    // areaLight areaLights[3];
-    // areaLights[0] = createAreaLight(vec3(-10.0, 15.0, 0.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
-    // areaLights[1] = createAreaLight(vec3(8.0, 15.0, 3.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
-    // areaLights[2] = createAreaLight(vec3(1.0, 15.0, -9.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
+    if (softShadows) {
+        areaLights[0] = createAreaLight(vec3(-10.0, 15.0, 0.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
+        areaLights[1] = createAreaLight(vec3(8.0, 15.0, 3.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
+        areaLights[2] = createAreaLight(vec3(1.0, 15.0, -9.0), 3.0, 3.0, vec3(1.0, 1.0, 1.0));
 
+    } else {
+        pointLights[0] = createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0));
+        pointLights[1] = createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0));
+        pointLights[2] = createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0));
+    }
+    
     for(int i = 0; i < MAX_BOUNCES; ++i)
     {
         if (hit_world(r, 0.0, 10000.0, rec))
         {
-            //calculate direct lighting with 3 white point lights:
-            for (int i = 0; i < pointLights.length(); ++i)
-                col += directLighting(pointLights[i], r, rec) * throughput;
-
-            // for (int i = 0; i < areaLights.length(); ++i)
-            //     col += directLighting(areaLights[i], r, rec) * throughput;
+            if (!softShadows) {
+                //calculate direct lighting with 3 white point lights:
+                for (int i = 0; i < pointLights.length(); ++i)
+                    col += directLighting(pointLights[i], r, rec) * throughput;
+            } else {
+                for (int i = 0; i < areaLights.length(); ++i)
+                    col += directLighting(areaLights[i], r, rec) * throughput;
+            }
            
             //calculate secondary ray and update throughput
             Ray scatterRay;
@@ -289,7 +299,7 @@ void main()
     vec3 camUp = vec3(0.0, 1.0, 0.0);
     vec3 camTarget = vec3(0.0, 0.0, -1.0);
     float fovy = 60.0;
-    float aperture = 10.0;
+    float aperture = 0.0;
     float distToFocus = 1.0;
     float time0 = 0.0;
     float time1 = 1.0;

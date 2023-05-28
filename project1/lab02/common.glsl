@@ -436,11 +436,12 @@ areaLight createAreaLight(vec3 centre, float width, float height, vec3 color) {
     areaLight l;
     l.numSamples = 9;
     int sqrtNumSamples = int(sqrt(float(l.numSamples)));
+
     for (int i = 0; i < sqrtNumSamples; i++) {
         for (int j = 0; j < sqrtNumSamples; j++){
             float offsetX = hash1(gSeed);
             float offsetZ = hash1(gSeed);
-            l.pos[i * sqrtNumSamples + j] = vec3(centre.x + (float(i) + offsetX) * width / 4.0, centre.y, centre.z + (float(j) + offsetZ) * height / 4.0);
+            l.pos[i * sqrtNumSamples + j] = vec3(centre.x + (float(i) + offsetX) * width / float(sqrtNumSamples), centre.y, centre.z + (float(j) + offsetZ) * height / float(sqrtNumSamples));
         }
     }
     l.color = color;
