@@ -19,7 +19,7 @@ void BVH::BVHNode::makeLeaf(unsigned int index_, unsigned int n_objs_) {
 void BVH::BVHNode::makeNode(unsigned int left_index_) {
 	this->leaf = false;
 	this->index = left_index_; 
-			//this->n_objs = n_objs_; 
+	//this->n_objs = n_objs_; 
 }
 
 
@@ -66,8 +66,6 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	float range_y = worldbb.max.y - worldbb.min.y;
 	float range_z = worldbb.max.z - worldbb.min.z;
 	float mid_point;
-
-	//printf("start ranges %f %f %f\n", range_x, range_y, range_z);
 
 	if (range_x >= range_y) {
 		mid_point = range_x;
@@ -137,10 +135,6 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 
 	build_recursive(left_index, split_index, left_child);
 	build_recursive(split_index, right_index, right_child);
-
-	//right_index, left_index and split_index refer to the indices in the objects vector
-	// do not confuse with left_node_index and right_node_index which refer to indices in the nodes vector. 
-	// node.index can have a index of objects vector or a index of nodes vector
 			
 }
 
@@ -149,32 +143,26 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 	Object* closest_obj = nullptr;
 
 	if (!current_node->getAABB().intercepts(ray, t)) {
-		//printf("Hello\n");
 		return nullptr;
 	}
 
-	//printf("0\n");
 	while (true) {
 		
 		if (current_node->isLeaf()) { //find the closest hit with the objects of the node
-			//printf("Leaf %d %d\n", current_node->getIndex(), current_node->getIndex() + current_node->getNObjs());
 
 			int base_index = current_node->getIndex(), size = current_node->getNObjs();
 
 			for (int i = base_index; i < base_index + size; i++) {
 				bool inter = objects[i]->intercepts(ray, t);
-				/*if (inter)
-					printf("true %f\n", t);*/
 
 				if (inter && t < *t_ret) {
 					*t_ret = t;
 					closest_obj = objects[i];
-					//printf("Object hit %d\n", i);
 				}
 			}
 		}
 		else {
-			//printf("Middle -- %d\n", current_node->getIndex());
+			
 			float t1 = FLT_MAX, t2 = FLT_MAX;
 			BVHNode* child1 = nodes[current_node->getIndex()];
 			BVHNode* child2 = nodes[current_node->getIndex() + 1];
@@ -189,12 +177,10 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 
 			if (c1 && c2) {
 				if (t2 < t1) {
-					//printf("%d\n", current_node->getIndex()+1);
 					current_node = child2;
 					s = new StackItem(child1, t1);
 				}
 				else {
-					//printf("%d\n", current_node->getIndex());
 					current_node = child1;
 					s = new StackItem(child2, t2);
 				}
@@ -203,17 +189,13 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 				continue;
 			}
 			else if (c1) {
-				//printf("%d\n", current_node->getIndex());
 				current_node = child1;
 				continue;
 			}
 			else if (c2) {
-				//printf("%d\n", current_node->getIndex() + 1);
 				current_node = child2;
 				continue;
 			}
-
-			//printf("Case5\n");
 		}
 
 		//Get from stack
@@ -224,8 +206,7 @@ Object* BVH::findIntersection(Ray& ray, BVHNode* current_node, float* t_ret) {
 			else {
 				StackItem s = hit_stack.top();
 				hit_stack.pop();
-				
-				//printf("-------------------Pop!\n");
+
 				if (s.t < *t_ret) {
 					current_node = s.ptr;
 					break;
@@ -241,7 +222,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 	bool hit = false; 
 
 	*hit_obj = findIntersection(ray, nodes[0], &tmin);
-	//printf("End Intersection\n");
+	
 	if (*hit_obj == nullptr) {
 		return false;
 	}
@@ -251,11 +232,8 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 }
 
 bool BVH::findIntersection(Ray& ray, BVHNode* current_node) {
-	float t;
+	float t, max_t = ray.direction.length();
 	Object* closest_obj = nullptr;
-
-
-	//----------------TODO: verify lenght do shadow ray
 
 	if (!current_node->getAABB().intercepts(ray, t)) {
 		return false;
@@ -267,7 +245,7 @@ bool BVH::findIntersection(Ray& ray, BVHNode* current_node) {
 			int base_index = current_node->getIndex(), size = current_node->getNObjs();
 
 			for (int i = base_index; i < base_index + size; i++) {
-				if (objects[i]->intercepts(ray, t)) {
+				if (objects[i]->intercepts(ray, t) && t < max_t) {
 					return true;
 				}
 			}
