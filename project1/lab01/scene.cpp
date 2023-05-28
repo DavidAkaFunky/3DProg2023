@@ -29,8 +29,8 @@ Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 	Max = Vector(xMax, yMax, zMax);
 
 	// enlarge the bounding box a bit just in case...
-	//Min -= EPSILON;
-	//Max += EPSILON;
+	Min -= EPSILON;
+	Max += EPSILON;
 }
 
 AABB Triangle::GetBoundingBox() {
