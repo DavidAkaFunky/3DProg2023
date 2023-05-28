@@ -585,25 +585,26 @@ Color getRefraction(Vector hit_point, Vector normal_vec, Vector tangent_vec, flo
 	int spp = scene->GetSamplesPerPixel();
 	Color colour;
 
-	if (roughness > 0) { // Fuzzy refractions
-		// Anti-aliasing already shoots multiple rays,
-		// so we only need to shoot more than one here
-		// if anti-aliasing is deactivated
-		int sqrt_num_samples = (spp == 0) ? 2 : 1;
-		Vector mod_refr_ray_dir;
+	// THIS DOES NOT WORK!!!
+	// if (roughness > 0) { // Fuzzy refractions
+	// 	// Anti-aliasing already shoots multiple rays,
+	// 	// so we only need to shoot more than one here
+	// 	// if anti-aliasing is deactivated
+	// 	int sqrt_num_samples = (spp == 0) ? 2 : 1;
+	// 	Vector mod_refr_ray_dir;
 
-		for (int p = 0; p < sqrt_num_samples; p++) {
-			for (int q = 0; q < sqrt_num_samples; q++) {
-				mod_refr_ray_dir = (refr_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
+	// 	for (int p = 0; p < sqrt_num_samples; p++) {
+	// 		for (int q = 0; q < sqrt_num_samples; q++) {
+	// 			mod_refr_ray_dir = (refr_ray_dir + rand_in_unit_sphere() * roughness).normalize(); // our implementation of random
 
-				Ray refr_ray(refr_hit_point, mod_refr_ray_dir);
+	// 			Ray refr_ray(refr_hit_point, mod_refr_ray_dir);
 
-				colour += rayTracing(refr_ray, depth + 1, ior_t);
-			}
-		}
+	// 			colour += rayTracing(refr_ray, depth + 1, ior_t);
+	// 		}
+	// 	}
 
-		return colour * (1 - Kr) * (1.0 / pow(sqrt_num_samples, 2)); // Average the added colours
-	}
+	// 	return colour * (1 - Kr) * (1.0 / pow(sqrt_num_samples, 2)); // Average the added colours
+	// }
 
 	Ray refr_ray(refr_hit_point, refr_ray_dir);
 	Color refr_colour = rayTracing(refr_ray, depth + 1, ior_t);

@@ -19,4 +19,4 @@
 
 ### Fuzzy Reflections
 
-- Set material's last parameter to be higher then `0`. 
+- Set material's last parameter to be higher than `0`.
