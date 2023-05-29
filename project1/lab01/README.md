@@ -10,7 +10,7 @@
 
 - In p3f file, light is defined as `l pos_x pos_y pos_z width height spl color_R color_G color_B`;
 - `width`: length in X axis;
-- `height`: lenght in Z axis;
+- `height`: length in Z axis;
 - `spl`: number of samples in the area light (ignored if `spp > 0`). If set to `0`, light is calculated as a point light in the specified position.
 
 ### Depth of Field

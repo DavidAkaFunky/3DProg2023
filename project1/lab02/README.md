@@ -8,11 +8,11 @@
 
 ### Depth of Field
 
-- In main, set the camera aperture value higher then `0.0`.
+- In main, set the camera aperture value higher than `0.0`.
 
 ### Fuzzy Reflections / Refractions
 
-- Set roughness parameter to a value higher then `0.0` in methods `createDielectricMaterial` and `createMetalMaterial`.
+- Set roughness parameter to a value higher than `0.0` in methods `createDielectricMaterial` and `createMetalMaterial`.
 
 ### Moving Camera
 
