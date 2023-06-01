@@ -1,0 +1,6 @@
+2023/06/01-20:25:06.777 2314 Creating DB C:/Users/João Aragonez/Desktop/Uni/4_ano/P3D/3DProg2023/SnowForest/Saved/webcache_4430\IndexedDB\https_www.youtube-nocookie.com_0.indexeddb.leveldb since it was missing.
+2023/06/01-20:25:06.788 2314 Reusing MANIFEST C:/Users/João Aragonez/Desktop/Uni/4_ano/P3D/3DProg2023/SnowForest/Saved/webcache_4430\IndexedDB\https_www.youtube-nocookie.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/06/01-20:30:01.597 105c Level-0 table #5: started
+2023/06/01-20:30:01.621 105c Level-0 table #5: 1167 bytes OK
+2023/06/01-20:30:01.622 105c Delete type=0 #3
+2023/06/01-20:30:01.623 105c Manual compaction at level-0 from (begin) .. (end); will stop at (end)
