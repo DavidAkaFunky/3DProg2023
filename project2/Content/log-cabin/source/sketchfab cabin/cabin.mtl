@@ -1,0 +1,351 @@
+# Blender MTL File: 'cabin.blend'
+# Material Count: 33
+
+newmtl .nail.003
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.111585 0.028614 0.013518
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl .nail.004
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.111585 0.028614 0.013518
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl .nail.005
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.111585 0.028614 0.013518
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl Logs.001
+Ns 323.999994
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Logs_big.001
+Ns 323.999994
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Logs_end.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_WoodEnds0088_9_seamless_L_normal.jpg
+map_Ns C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_OldBeams_3x3_4K_roughness.tif
+
+newmtl Nordic_Moss.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -s 15.000000 15.000000 15.000000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\se4rwei_4K_Normal.jpg
+map_Kd -s 15.000000 15.000000 15.000000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\sfknaeoa_4K_Albedo.jpg
+
+newmtl Prism_Glass.006
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Prism_Glass.007
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Prism_Glass_medium.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Prism_Glass_small.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Shtora2.001
+Ns 323.999994
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Wood.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\tmp1_jmxzus
+
+newmtl concrete_pebbles.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -s 3.000000 3.000000 3.000000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_Concrete2_2x2_1K_normal.tif
+map_Ns -s 3.000000 3.000000 3.000000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_ConcretewPebbles_1x1_512_roughness.tif
+
+newmtl cut_processed_wood.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl door_glass.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl door_w/frame.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.061246 0.027321 0.015209
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl paper.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl porch_light.001
+Ns 900.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\galvanized steel.001_normal.png
+map_Kd C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\galvanized steel.001_basecolor.png
+map_Ns C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\galvanized steel.001_roughness.png
+refl C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\galvanized steel.001_metallic.png
+
+newmtl processed_wood_end.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_WoodEnds0019_2_M_normal.jpg
+map_Ns C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_OldBeams_3x3_4K_roughness.tif
+
+newmtl roof.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd -s 6.500000 6.500000 6.500000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_Roofing_Bitumen4_2K_albedo.tif
+map_Ns -s 6.500000 6.500000 6.500000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_Roofing_Bitumen4_2K_roughness.tif
+
+newmtl stone_walls.002
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl stone_walls.003
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -s 5.000000 5.000000 5.000000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_Wall_Cobblestone_3x3_1K_normal.tif
+
+newmtl window_frame_medium.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.061246 0.027321 0.015209
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl window_frame_small.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.061246 0.027321 0.015209
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl window_frame_v2.004
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.061246 0.027321 0.015209
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl wood_boards.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -s 3.500000 3.500000 3.500000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_OldPlanks2_2x2_2K_normal.tif
+
+newmtl wood_boards_floor.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -s 8.000000 8.000000 8.000000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_Wood_PlanksTemple03_1.8x1.8_1K_normal.tif
+
+newmtl wood_boards_floor_second_story.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -s 8.000000 8.000000 8.000000 C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Alone Cabin\\assets\\cabin sketchfab\\textures\\TexturesCom_RoughWood_2x2_2K_normal.tif
+
+newmtl wood_boards_patio.001
+Ns 323.999994
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl wood_floor
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl wood_patio.001
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.061246 0.027321 0.015209
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl wood_patio.003
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.061246 0.027321 0.015209
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
